@@ -1,6 +1,6 @@
 {
   "name": "aws-cloudfront-s3-deploy",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "Package to upload files to s3 distribution, and also invalidate those paths in CloudFront if necessary",
   "main": "src/index.js",
   "scripts": {
