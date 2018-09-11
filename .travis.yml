@@ -10,7 +10,7 @@ sudo: false
 #- npm run test-with-cov
 
 before_deploy:
-- git remote set-url origin https://${GH_TOKEN}@github.com/ReidWeb/GitInspector-CSV
+- git remote set-url origin https://${GH_TOKEN}@github.com/ReidWeb/aws-cloudfront-s3-deploy/
 - git fetch
 -  git checkout master
 - git config --global user.name 'Travis CI[bot]'
@@ -27,7 +27,7 @@ deploy:
     tags: false
     condition: '$TRAVIS_COMMIT_MESSAGE != *"chore(release)"*'
     node: 8
-    repo: ReidWeb/GitInspector-CSV
+    repo: ReidWeb/aws-cloudfront-s3-deploy
     branch: master
 
 after_deploy:
