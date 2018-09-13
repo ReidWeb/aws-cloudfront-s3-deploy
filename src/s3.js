@@ -3,14 +3,18 @@ const AWS = require('aws-sdk');
 const chalk = require('chalk');
 const fs = require('fs');
 const ProgressBar = require('progress');
-var mime = require('mime-types')
+const mime = require('mime-types');
 
 const reAttemptMax = 5;
 
 function getFileLastModifiedDate(filePath) {
   return new Promise((resolve) => {
     fs.stat(filePath, (err, localFileData) => {
-      resolve(localFileData.mtime);
+      if (localFileData.mtime) {
+        resolve(localFileData.mtime);
+      } else {
+        resolve(false);
+      }
     });
   });
 }
@@ -19,16 +23,18 @@ function uploadObj(params, s3, reAttemptCount) {
   return new Promise((resolve, reject) => {
     s3.putObject(params, (err) => {
       if (err) {
-        if (reAttemptCount === reAttemptMax) {
+        if (reAttemptCount >= reAttemptMax) {
           // eslint-disable-next-line prettier/prettier
           reject(new Error(`Error: Unable to process object ${params.Key}, reattempted for ${reAttemptMax} (MAX)`));
+        } else {
+          reAttemptCount++;
+          uploadObj(params, s3, reAttemptCount)
+            .then(()=> {
+              resolve(params.Key)
+            }).catch((e) => {
+              reject(e);
+            });
         }
-        reAttemptCount++;
-        uploadObj(params, s3, reAttemptCount)
-          .then(resolve(params.Key))
-          .catch((e) => {
-            reject(e);
-          });
       } else {
         resolve(params.Key);
       }
@@ -36,7 +42,7 @@ function uploadObj(params, s3, reAttemptCount) {
   });
 }
 
-function hasFileChanged(path, bucketName, s3) {
+function hasFileChanged(path, bucketName, s3, fileModifiedCheckFn) {
   return new Promise((resolve, reject) => {
     const params = { Bucket: bucketName, Key: path };
 
@@ -49,15 +55,15 @@ function hasFileChanged(path, bucketName, s3) {
         }
       } else {
         const filePath = `public/${path}`;
-        getFileLastModifiedDate(filePath).then((localFileLastModifiedDate) => {
-          if (err) reject(err);
-          else {
-            const remoteFileLastModifiedDate = remoteData.Metadata['last-modified'];
-            if (remoteFileLastModifiedDate !== localFileLastModifiedDate.toString()) {
-              resolve(true);
-            } else {
-              resolve(false);
-            }
+        fileModifiedCheckFn(filePath).then((localFileLastModifiedDate) => {
+          const remoteFileLastModifiedDate = remoteData.Metadata['last-modified'];
+          if (!remoteFileLastModifiedDate) { //If last modified date could not be retrieved
+            resolve(true);
+          }
+          else if (remoteFileLastModifiedDate !== localFileLastModifiedDate.toISOString()) {
+            resolve(true);
+          } else {
+            resolve(false);
           }
         });
       }
@@ -65,10 +71,10 @@ function hasFileChanged(path, bucketName, s3) {
   });
 }
 
-function lookupFileType (filePath) {
-  return new Promise((resolve, reject) => {
+function lookupFileType(filePath) {
+  return new Promise((resolve) => {
     try {
-      let type = mime.lookup(filePath)
+      const type = mime.lookup(filePath);
       if (type) {
         resolve(type);
       } else {
@@ -135,14 +141,14 @@ function uploadFiles(fileList, bucketName, verboseMode, isCli) {
                       resolve('Upload complete!');
                     }
                   }
-                } else resolve("Upload complete!");
+                } else resolve('Upload complete!');
               }
             })
             .catch((e) => {
               reject(e);
             });
         }).catch((e) => {
-          reject(e)
+          reject(e);
         });
       });
     });
@@ -160,7 +166,7 @@ function uploadChangedFilesInDir(pathToUpload, bucketName, distId, verboseMode, 
 
       fileList.forEach((fileName) => {
         const bucketPath = fileName.substring(pathToUpload.length + 1);
-        hasFileChanged(bucketPath, bucketName, s3)
+        hasFileChanged(bucketPath, bucketName, s3, hasFileChanged)
           .then((hasChanged) => {
             if (hasChanged) {
               changedFiles.push(bucketPath);
