@@ -2,6 +2,9 @@
   "name": "aws-cloudfront-s3-deploy",
   "version": "1.0.10",
   "description": "Package to upload files to s3 distribution, and also invalidate those paths in CloudFront if necessary",
+  "engines": {
+    "node": ">=8.0.0"
+  },
   "main": "src/index.js",
   "bin": {
     "aws-cloudfront-s3-deploy": "./bin/cli.js"
