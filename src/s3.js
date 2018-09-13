@@ -29,8 +29,8 @@ function uploadObj(params, s3, reAttemptCount) {
         } else {
           reAttemptCount++;
           uploadObj(params, s3, reAttemptCount)
-            .then(()=> {
-              resolve(params.Key)
+            .then(() => {
+              resolve(params.Key);
             }).catch((e) => {
               reject(e);
             });
@@ -42,7 +42,7 @@ function uploadObj(params, s3, reAttemptCount) {
   });
 }
 
-function hasFileChanged(path, bucketName, s3, fileModifiedCheckFn) {
+function hasFileChanged(path, bucketName, s3, localFileModifiedCheckFn) {
   return new Promise((resolve, reject) => {
     const params = { Bucket: bucketName, Key: path };
 
@@ -55,12 +55,11 @@ function hasFileChanged(path, bucketName, s3, fileModifiedCheckFn) {
         }
       } else {
         const filePath = `public/${path}`;
-        fileModifiedCheckFn(filePath).then((localFileLastModifiedDate) => {
+        localFileModifiedCheckFn(filePath).then((localFileLastModifiedDate) => {
           const remoteFileLastModifiedDate = remoteData.Metadata['last-modified'];
-          if (!remoteFileLastModifiedDate) { //If last modified date could not be retrieved
+          if (!remoteFileLastModifiedDate) { // If last modified date could not be retrieved
             resolve(true);
-          }
-          else if (remoteFileLastModifiedDate !== localFileLastModifiedDate.toISOString()) {
+          } else if (remoteFileLastModifiedDate !== localFileLastModifiedDate.toISOString()) {
             resolve(true);
           } else {
             resolve(false);
@@ -113,7 +112,7 @@ function uploadFiles(fileList, bucketName, verboseMode, isCli) {
             Body: fs.readFileSync(`public/${filePath}`),
             ContentType: fileType,
             Metadata: {
-              'Last-Modified': localFileModifiedLastDate.toString(),
+              'Last-Modified': localFileModifiedLastDate.toISOString(),
             },
           };
           uploadObj(params, s3, 0)
@@ -166,7 +165,7 @@ function uploadChangedFilesInDir(pathToUpload, bucketName, distId, verboseMode, 
 
       fileList.forEach((fileName) => {
         const bucketPath = fileName.substring(pathToUpload.length + 1);
-        hasFileChanged(bucketPath, bucketName, s3, hasFileChanged)
+        hasFileChanged(bucketPath, bucketName, s3, getFileLastModifiedDate)
           .then((hasChanged) => {
             if (hasChanged) {
               changedFiles.push(bucketPath);
