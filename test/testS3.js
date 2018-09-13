@@ -9,7 +9,7 @@ const sinon = require('sinon');
 chai.use(require('chai-as-promised'));
 
 describe('s3.js [Unit]', () => {
-  describe('#getFileLastModifiedDate', () => {
+  describe('#getFileLastModifiedDate()', () => {
     it('should resolve the last modified date when the meta-data is available', async () => {
       const s3 = rewire('../src/s3');
       const getFileLastModifiedDate = s3.__get__('getFileLastModifiedDate');
@@ -57,7 +57,7 @@ describe('s3.js [Unit]', () => {
     });
   });
 
-  describe('#uploadObj', () => {
+  describe('#uploadObj()', () => {
     it('should resolve the object key upon a successful upload', async () => {
       const s3 = rewire('../src/s3');
       const uploadObj = s3.__get__('uploadObj');
@@ -92,7 +92,7 @@ describe('s3.js [Unit]', () => {
     });
   });
 
-  describe('#hasFileChanged', () => {
+  describe('#hasFileChanged()', () => {
     describe('when file already exists in S3', () => {
       describe('and last modified dates do not match', () => {
         it('should resolve to false', async () => {
@@ -116,7 +116,7 @@ describe('s3.js [Unit]', () => {
             });
           }
 
-          const actual = await hasFileChanged('foo.txt', 'myBucket', s3ClientMock, fileModifiedCheckFn);
+          const actual = await hasFileChanged('path/to', 'foo.txt', 'myBucket', s3ClientMock, fileModifiedCheckFn);
 
           actual.should.equal(false);
         });
@@ -146,19 +146,19 @@ describe('s3.js [Unit]', () => {
         const fileModifiedCheckFnSpy = sinon.spy(fileModifiedCheckFn);
 
         it('`hasFileChanged(..)` should be called with the correct arguments', async () => {
-          await hasFileChanged('foo.txt', 'myBucket', s3ClientMock, fileModifiedCheckFnSpy);
+          await hasFileChanged('path/to', 'foo.txt', 'myBucket', s3ClientMock, fileModifiedCheckFnSpy);
           // eslint-disable-next-line no-unused-expressions
-          fileModifiedCheckFnSpy.calledWith('public/foo.txt').should.be.ok;
+          fileModifiedCheckFnSpy.calledWith('path/to/foo.txt').should.be.ok;
         });
 
         it('should resolve to true', async () => {
-          const actual = await hasFileChanged('foo.txt', 'myBucket', s3ClientMock, fileModifiedCheckFnSpy);
+          const actual = await hasFileChanged('path/to', 'foo.txt', 'myBucket', s3ClientMock, fileModifiedCheckFnSpy);
           actual.should.equal(true);
         });
       });
 
       describe('and last modified date is not available for remote file', () => {
-        it('should resolve to true (in order to instigate an upload', async () => {
+        it('should resolve to true (in order to instigate an upload)', async () => {
           const s3 = rewire('../src/s3');
           const hasFileChanged = s3.__get__('hasFileChanged');
           const res = {
@@ -177,7 +177,7 @@ describe('s3.js [Unit]', () => {
             });
           }
 
-          const actual = await hasFileChanged('foo.txt', 'myBucket', s3ClientMock, fileModifiedCheckFn);
+          const actual = await hasFileChanged('path/to', 'foo.txt', 'myBucket', s3ClientMock, fileModifiedCheckFn);
 
           actual.should.equal(true);
         });
@@ -204,7 +204,7 @@ describe('s3.js [Unit]', () => {
           });
         }
 
-        const actual = await hasFileChanged('foo.txt', 'myBucket', s3ClientMock, fileModifiedCheckFn);
+        const actual = await hasFileChanged('path/to', 'foo.txt', 'myBucket', s3ClientMock, fileModifiedCheckFn);
         actual.should.equal(true);
       });
     });
@@ -230,11 +230,534 @@ describe('s3.js [Unit]', () => {
         }
 
         try {
-          await hasFileChanged('foo.txt', 'myBucket', s3ClientMock, fileModifiedCheckFn);
+          await hasFileChanged('path/to', 'foo.txt', 'myBucket', s3ClientMock, fileModifiedCheckFn);
           'I'.should.equal('Me');
         } catch (e) {
           e.should.equal(errorRes);
         }
+      });
+    });
+  });
+
+  describe('#lookupFileType()', () => {
+    it('should resolve the file type when the filetype as an associated mime type', async () => {
+      const s3 = rewire('../src/s3');
+      const lookupFileType = s3.__get__('lookupFileType');
+
+      const mimeMock = {
+        lookup() {
+          return 'application/json';
+        },
+      };
+
+      s3.__set__({ mime: mimeMock });
+
+      const actual = await lookupFileType('imaginary.json');
+      actual.should.equal('application/json');
+    });
+
+    it('should resolve to `application/octet-stream` when the filetype has no associated mime type', async () => {
+      const s3 = rewire('../src/s3');
+      const lookupFileType = s3.__get__('lookupFileType');
+
+      const mimeMock = {
+        lookup() {
+          return null;
+        },
+      };
+
+      s3.__set__({ mime: mimeMock });
+
+      const actual = await lookupFileType('_headers');
+      actual.should.equal('application/octet-stream');
+    });
+
+    describe('when an error is encountered looking up the mime type', () => {
+      it('should reject with error', async () => {
+        const s3 = rewire('../src/s3');
+        const lookupFileType = s3.__get__('lookupFileType');
+
+        const mimeMock = {
+          lookup() {
+            throw (new Error("Hi i'm a generic error!"));
+          },
+        };
+
+        s3.__set__({ mime: mimeMock });
+
+        try {
+          await lookupFileType('a');
+          'I'.should.equal('not invoked');
+        } catch (e) {
+          e.message.should.equal("Hi i'm a generic error!");
+        }
+      });
+    });
+  });
+
+  describe('#uploadFiles()', () => {
+    describe('when program is being run from CLI', async () => {
+      it('then the progress bar should be created', async () => {
+        const s3 = rewire('../src/s3');
+        const uploadFiles = s3.__get__('uploadFiles');
+
+        let constructorCallCount = 0;
+
+        class ProgressBarMock {
+          // eslint-disable-next-line no-empty-function,no-useless-constructor
+          constructor(a, b) {
+            this.total = 60;
+            this.curr = 0;
+            constructorCallCount++;
+          }
+
+          tick() {
+            this.curr++;
+          }
+        }
+        sinon.stub(ProgressBarMock.prototype, 'constructor');
+
+        s3.__set__({ ProgressBar: ProgressBarMock });
+
+        const getFileLastModifiedDateStub = sinon.stub();
+        getFileLastModifiedDateStub.resolves(new Date('2016-09-12T15:48:06.228Z'));
+        s3.__set__('getFileLastModifiedDate', getFileLastModifiedDateStub);
+
+        const lookupFileTypeStub = sinon.stub();
+        lookupFileTypeStub.resolves('text/yaml');
+        s3.__set__('lookupFileType', lookupFileTypeStub);
+
+        const fsMock = {
+          readFileSync() {
+            return 'dummy data';
+          },
+        };
+        s3.__set__({ fs: fsMock });
+
+        const uploadObjStub = sinon.stub();
+        uploadObjStub.resolves('anything.txt');
+        s3.__set__('uploadObj', uploadObjStub);
+
+
+        const dummyArr = [];
+        let i;
+        for (i = 0; i < 2; i++) {
+          dummyArr[i] = `foo${i}.txt`;
+        }
+        await uploadFiles('path/to', dummyArr, 'yourBucket', false, true);
+        constructorCallCount.should.equal(1);
+      });
+    });
+
+    describe('when verbose mode is turned on', () => {
+      it('then log statements should be output with progress', async () => {
+        const s3 = rewire('../src/s3');
+        const uploadFiles = s3.__get__('uploadFiles');
+
+
+        class ProgressBarMock {
+          // eslint-disable-next-line no-empty-function,no-useless-constructor
+          constructor(a, b) {
+            this.total = 60;
+            this.curr = 0;
+          }
+
+          tick() {
+            this.curr++;
+          }
+        }
+        sinon.stub(ProgressBarMock.prototype, 'constructor');
+
+        s3.__set__({ ProgressBar: ProgressBarMock });
+
+        const getFileLastModifiedDateStub = sinon.stub();
+        getFileLastModifiedDateStub.resolves(new Date('2016-09-12T15:48:06.228Z'));
+        s3.__set__('getFileLastModifiedDate', getFileLastModifiedDateStub);
+
+        const lookupFileTypeStub = sinon.stub();
+        lookupFileTypeStub.resolves('text/yaml');
+        s3.__set__('lookupFileType', lookupFileTypeStub);
+
+        const fsMock = {
+          readFileSync() {
+            return 'dummy data';
+          },
+        };
+        s3.__set__({ fs: fsMock });
+
+        const uploadObjStub = sinon.stub();
+        uploadObjStub.resolves('anything.txt');
+        s3.__set__('uploadObj', uploadObjStub);
+
+
+        const logSpy = sinon.spy();
+        const consoleMock = {
+          log: logSpy,
+        };
+        s3.__set__({ console: consoleMock });
+
+        const dummyArr = [];
+        let i;
+        for (i = 0; i < 9; i++) {
+          dummyArr[i] = `foo${i}.txt`;
+        }
+        await uploadFiles('path/to', dummyArr, 'yourBucket', true, true);
+        (logSpy.callCount).should.equal(9);
+      });
+    });
+
+    describe('when parameters are supplied to `uploadObj` function', () => {
+      let interceptedArgs;
+      before(async () => {
+        const s3 = rewire('../src/s3');
+        const uploadFiles = s3.__get__('uploadFiles');
+
+
+        class ProgressBarMock {
+          // eslint-disable-next-line no-empty-function,no-useless-constructor
+          constructor(a, b) {
+            this.total = 60;
+            this.curr = 0;
+          }
+
+          tick() {
+            this.curr++;
+          }
+        }
+        sinon.stub(ProgressBarMock.prototype, 'constructor');
+
+        s3.__set__({ ProgressBar: ProgressBarMock });
+
+        const getFileLastModifiedDateStub = sinon.stub();
+        getFileLastModifiedDateStub.resolves(new Date('2016-09-12T15:48:06.228Z'));
+        s3.__set__('getFileLastModifiedDate', getFileLastModifiedDateStub);
+
+        const lookupFileTypeStub = sinon.stub();
+        lookupFileTypeStub.resolves('text/yaml');
+        s3.__set__('lookupFileType', lookupFileTypeStub);
+
+        const fsMock = {
+          readFileSync() {
+            return 'dummy data';
+          },
+        };
+        s3.__set__({ fs: fsMock });
+
+        const uploadObjStub = sinon.stub();
+        uploadObjStub.resolves('anything.txt');
+        s3.__set__('uploadObj', uploadObjStub);
+
+
+        const consoleMock = {
+          log() {},
+        };
+        s3.__set__({ console: consoleMock });
+
+        await uploadFiles('path/to', ['foo.txt'], 'yourBucket', true, true);
+        const invocationOne = uploadObjStub.getCall(0);
+        interceptedArgs = invocationOne.args[0];
+      });
+
+      it('then Key should omit target directory', async () => {
+        interceptedArgs.Key.should.equal('foo.txt');
+      });
+
+      it('then Body should equal that of the file in the target directory', async () => {
+        interceptedArgs.Body.should.equal('dummy data');
+      });
+
+      it('then Last-Modified meta-data should be correctly set to an ISO time string', async () => {
+        interceptedArgs.Metadata['Last-Modified'].should.equal('2016-09-12T15:48:06.228Z');
+      });
+
+      it('then the content type should correctly be set', async () => {
+        interceptedArgs.ContentType.should.equal('text/yaml');
+      });
+    });
+
+    describe('when the file type of the file is looked up', () => {
+      it('it should be the local file path that is used, not the remote file path', async () => {
+        const s3 = rewire('../src/s3');
+        const uploadFiles = s3.__get__('uploadFiles');
+
+
+        class ProgressBarMock {
+          // eslint-disable-next-line no-empty-function,no-useless-constructor
+          constructor(a, b) {
+            this.total = 60;
+            this.curr = 0;
+          }
+
+          tick() {
+            this.curr++;
+          }
+        }
+        sinon.stub(ProgressBarMock.prototype, 'constructor');
+
+        s3.__set__({ ProgressBar: ProgressBarMock });
+
+        const getFileLastModifiedDateStub = sinon.stub();
+        getFileLastModifiedDateStub.resolves(new Date('2016-09-12T15:48:06.228Z'));
+        s3.__set__('getFileLastModifiedDate', getFileLastModifiedDateStub);
+
+        const lookupFileTypeStub = sinon.stub();
+        lookupFileTypeStub.resolves('text/yaml');
+        s3.__set__('lookupFileType', lookupFileTypeStub);
+
+        const fsMock = {
+          readFileSync() {
+            return 'dummy data';
+          },
+        };
+        s3.__set__({ fs: fsMock });
+
+        const uploadObjStub = sinon.stub();
+        uploadObjStub.resolves('anything.txt');
+        s3.__set__('uploadObj', uploadObjStub);
+
+
+        const consoleMock = {
+          log() {},
+        };
+        s3.__set__({ console: consoleMock });
+
+        await uploadFiles('path/to', ['foo.txt'], 'yourBucket', true, true);
+        sinon.assert.calledWith(lookupFileTypeStub, 'path/to/foo.txt');
+      });
+
+      it('it should reject with an error when an error is encountered', async () => {
+        const s3 = rewire('../src/s3');
+        const uploadFiles = s3.__get__('uploadFiles');
+
+
+        class ProgressBarMock {
+          // eslint-disable-next-line no-empty-function,no-useless-constructor
+          constructor(a, b) {
+            this.total = 60;
+            this.curr = 0;
+          }
+
+          tick() {
+            this.curr++;
+          }
+        }
+        sinon.stub(ProgressBarMock.prototype, 'constructor');
+
+        s3.__set__({ ProgressBar: ProgressBarMock });
+
+        const getFileLastModifiedDateStub = sinon.stub();
+        getFileLastModifiedDateStub.resolves(new Date('2016-09-12T15:48:06.228Z'));
+        s3.__set__('getFileLastModifiedDate', getFileLastModifiedDateStub);
+
+        const lookupFileTypeStub = sinon.stub();
+        lookupFileTypeStub.rejects(new Error('An error'));
+        s3.__set__('lookupFileType', lookupFileTypeStub);
+
+        const fsMock = {
+          readFileSync() {
+            return 'dummy data';
+          },
+        };
+        s3.__set__({ fs: fsMock });
+
+        const uploadObjStub = sinon.stub();
+        uploadObjStub.resolves('anything.txt');
+        s3.__set__('uploadObj', uploadObjStub);
+
+
+        const consoleMock = {
+          log() {},
+        };
+        s3.__set__({ console: consoleMock });
+
+        try {
+          await uploadFiles('path/to', ['foo.txt'], 'yourBucket', true, true);
+          'I'.should.equal('Not be called');
+        } catch (e) {
+          e.message.should.equal('An error');
+        }
+      });
+    });
+
+    describe('when an error is encountered uploading the file', () => {
+      it('should reject with error', async () => {
+        const s3 = rewire('../src/s3');
+        const uploadFiles = s3.__get__('uploadFiles');
+
+
+        class ProgressBarMock {
+          // eslint-disable-next-line no-empty-function,no-useless-constructor
+          constructor(a, b) {
+            this.total = 60;
+            this.curr = 0;
+          }
+
+          tick() {
+            this.curr++;
+          }
+        }
+        sinon.stub(ProgressBarMock.prototype, 'constructor');
+
+        s3.__set__({ ProgressBar: ProgressBarMock });
+
+        const getFileLastModifiedDateStub = sinon.stub();
+        getFileLastModifiedDateStub.resolves(new Date('2016-09-12T15:48:06.228Z'));
+        s3.__set__('getFileLastModifiedDate', getFileLastModifiedDateStub);
+
+        const lookupFileTypeStub = sinon.stub();
+        lookupFileTypeStub.rejects(new Error('Error foo'));
+        s3.__set__('lookupFileType', lookupFileTypeStub);
+
+        const fsMock = {
+          readFileSync() {
+            return 'dummy data';
+          },
+        };
+        s3.__set__({ fs: fsMock });
+
+        const uploadObjStub = sinon.stub();
+        uploadObjStub.resolves('anything.txt');
+        s3.__set__('uploadObj', uploadObjStub);
+
+
+        const consoleMock = {
+          log() {},
+        };
+        s3.__set__({ console: consoleMock });
+
+        try {
+          await uploadFiles('path/to', ['foo.txt'], 'yourBucket', true, true);
+          'I'.should.not.equal('be called');
+        } catch (e) {
+          e.message.should.equal('Error foo');
+        }
+      });
+    });
+
+    describe('when all files have been successfully uploaded', () => {
+
+      describe('and program is not being run from CLI', async () => {
+        const s3 = rewire('../src/s3');
+        const uploadFiles = s3.__get__('uploadFiles');
+
+        let tickCallCount = 0;
+        class ProgressBarMock {
+          // eslint-disable-next-line no-empty-function,no-useless-constructor
+          constructor(a, b) {
+            this.total = 60;
+            this.curr = 0;
+          }
+
+          tick() {
+            this.curr++;
+            tickCallCount++;
+          }
+        }
+        sinon.stub(ProgressBarMock.prototype, 'constructor');
+
+        s3.__set__({ ProgressBar: ProgressBarMock });
+
+        const getFileLastModifiedDateStub = sinon.stub();
+        getFileLastModifiedDateStub.resolves(new Date('2016-09-12T15:48:06.228Z'));
+        s3.__set__('getFileLastModifiedDate', getFileLastModifiedDateStub);
+
+        const lookupFileTypeStub = sinon.stub();
+        lookupFileTypeStub.resolves('text/yaml');
+        s3.__set__('lookupFileType', lookupFileTypeStub);
+
+        const fsMock = {
+          readFileSync() {
+            return 'dummy data';
+          },
+        };
+        s3.__set__({ fs: fsMock });
+
+        const uploadObjStub = sinon.stub();
+        uploadObjStub.resolves('anything.txt');
+        s3.__set__('uploadObj', uploadObjStub);
+
+
+        const consoleMock = {
+          log() {},
+        };
+        s3.__set__({ console: consoleMock });
+
+        const dummyArr = [];
+        let i;
+        for (i = 0; i < 100; i++) {
+          dummyArr[i] = `foo${i}.txt`;
+        }
+        const actual = await uploadFiles('path/to', dummyArr, 'yourBucket', true, false);
+
+        it('then the progress bar should never have been incremented', async () => {
+          tickCallCount.should.equal(0);
+        });
+
+        it('should resolve with `Upload complete!`', async () => {
+          actual.should.equal('Upload complete!');
+        });
+      });
+
+      describe('and program is being run from CLI', async () => {
+        const s3 = rewire('../src/s3');
+        const uploadFiles = s3.__get__('uploadFiles');
+
+        let tickCallCount = 0;
+        class ProgressBarMock {
+          // eslint-disable-next-line no-empty-function,no-useless-constructor
+          constructor(a, b) {
+            this.total = 60;
+            this.curr = 0;
+          }
+
+          tick() {
+            this.curr++;
+            tickCallCount++;
+          }
+        }
+        sinon.stub(ProgressBarMock.prototype, 'constructor');
+
+        s3.__set__({ ProgressBar: ProgressBarMock });
+
+        const getFileLastModifiedDateStub = sinon.stub();
+        getFileLastModifiedDateStub.resolves(new Date('2016-09-12T15:48:06.228Z'));
+        s3.__set__('getFileLastModifiedDate', getFileLastModifiedDateStub);
+
+        const lookupFileTypeStub = sinon.stub();
+        lookupFileTypeStub.resolves('text/yaml');
+        s3.__set__('lookupFileType', lookupFileTypeStub);
+
+        const fsMock = {
+          readFileSync() {
+            return 'dummy data';
+          },
+        };
+        s3.__set__({ fs: fsMock });
+
+        const uploadObjStub = sinon.stub();
+        uploadObjStub.resolves('anything.txt');
+        s3.__set__('uploadObj', uploadObjStub);
+
+
+        const consoleMock = {
+          log() {},
+        };
+        s3.__set__({ console: consoleMock });
+
+        const dummyArr = [];
+        let i;
+        for (i = 0; i < 100; i++) {
+          dummyArr[i] = `foo${i}.txt`;
+        }
+        const actual = await uploadFiles('path/to', dummyArr, 'yourBucket', true, true);
+
+        it('then the progress bar should have been incremented successfully', async () => {
+          tickCallCount.should.equal(61);
+        });
+
+        it('should resolve with `Upload complete!`', async () => {
+          actual.should.equal('Upload complete!');
+        });
       });
     });
   });

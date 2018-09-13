@@ -5,7 +5,8 @@ const fs = require('fs');
 const ProgressBar = require('progress');
 const mime = require('mime-types');
 
-const reAttemptMax = 5;
+const MAX_NUM_REATTEMPTS = 5;
+const BAR_SEGMENTS = 60;
 
 function getFileLastModifiedDate(filePath) {
   return new Promise((resolve) => {
@@ -23,9 +24,9 @@ function uploadObj(params, s3, reAttemptCount) {
   return new Promise((resolve, reject) => {
     s3.putObject(params, (err) => {
       if (err) {
-        if (reAttemptCount >= reAttemptMax) {
+        if (reAttemptCount >= MAX_NUM_REATTEMPTS) {
           // eslint-disable-next-line prettier/prettier
-          reject(new Error(`Error: Unable to process object ${params.Key}, reattempted for ${reAttemptMax} (MAX)`));
+          reject(new Error(`Error: Unable to process object ${params.Key}, reattempted for ${MAX_NUM_REATTEMPTS} (MAX)`));
         } else {
           reAttemptCount++;
           uploadObj(params, s3, reAttemptCount)
@@ -42,9 +43,9 @@ function uploadObj(params, s3, reAttemptCount) {
   });
 }
 
-function hasFileChanged(path, bucketName, s3, localFileModifiedCheckFn) {
+function hasFileChanged(pathToFile, fileName, bucketName, s3, localFileModifiedCheckFn) {
   return new Promise((resolve, reject) => {
-    const params = { Bucket: bucketName, Key: path };
+    const params = { Bucket: bucketName, Key: fileName };
 
     s3.headObject(params, (err, remoteData) => {
       if (err) {
@@ -54,7 +55,7 @@ function hasFileChanged(path, bucketName, s3, localFileModifiedCheckFn) {
           reject(err);
         }
       } else {
-        const filePath = `public/${path}`;
+        const filePath = `${pathToFile}/${fileName}`;
         localFileModifiedCheckFn(filePath).then((localFileLastModifiedDate) => {
           const remoteFileLastModifiedDate = remoteData.Metadata['last-modified'];
           if (!remoteFileLastModifiedDate) { // If last modified date could not be retrieved
@@ -71,7 +72,7 @@ function hasFileChanged(path, bucketName, s3, localFileModifiedCheckFn) {
 }
 
 function lookupFileType(filePath) {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     try {
       const type = mime.lookup(filePath);
       if (type) {
@@ -80,36 +81,36 @@ function lookupFileType(filePath) {
         resolve('application/octet-stream');
       }
     } catch (e) {
-      resolve('application/octet-stream');
+      reject(e);
     }
   });
 }
 
-function uploadFiles(fileList, bucketName, verboseMode, isCli) {
+function uploadFiles(pathToUpload, fileList, bucketName, verboseMode, isCli) {
   const s3 = new AWS.S3();
   return new Promise((resolve, reject) => {
-    let itemsProcessed = 0;
-    const barSegments = 60;
     const fileListLength = fileList.length;
-    const barIncrement = Math.round(fileList.length / barSegments);
+    const barIncrement = Math.round(fileList.length / BAR_SEGMENTS);
     let nextIncrement = barIncrement;
+    let itemsProcessed = 0;
     let bar;
 
     if (isCli) {
       bar = new ProgressBar('Uploading [:bar]  :percent', {
-        total: barSegments,
+        total: BAR_SEGMENTS,
         clear: true,
         head: '>',
       });
     }
 
-    fileList.forEach((filePath) => {
-      getFileLastModifiedDate(`public/${filePath}`).then((localFileModifiedLastDate) => {
-        lookupFileType(`public/${filePath}`).then((fileType) => {
+    fileList.forEach((filePathInTargetDir) => {
+      const filePathOnDisk = `${pathToUpload}/${filePathInTargetDir}`;
+      getFileLastModifiedDate(filePathOnDisk).then((localFileModifiedLastDate) => {
+        lookupFileType(filePathOnDisk).then((fileType) => {
           const params = {
             Bucket: bucketName,
-            Key: filePath,
-            Body: fs.readFileSync(`public/${filePath}`),
+            Key: filePathInTargetDir,
+            Body: fs.readFileSync(`public/${filePathInTargetDir}`),
             ContentType: fileType,
             Metadata: {
               'Last-Modified': localFileModifiedLastDate.toISOString(),
@@ -123,7 +124,7 @@ function uploadFiles(fileList, bucketName, verboseMode, isCli) {
               }
               itemsProcessed++;
 
-              if (itemsProcessed === nextIncrement) {
+              if (itemsProcessed >= nextIncrement) {
                 nextIncrement += barIncrement;
                 if (isCli) {
                   bar.tick();
@@ -165,7 +166,7 @@ function uploadChangedFilesInDir(pathToUpload, bucketName, distId, verboseMode, 
 
       fileList.forEach((fileName) => {
         const bucketPath = fileName.substring(pathToUpload.length + 1);
-        hasFileChanged(bucketPath, bucketName, s3, getFileLastModifiedDate)
+        hasFileChanged(pathToUpload, bucketPath, bucketName, s3, getFileLastModifiedDate)
           .then((hasChanged) => {
             if (hasChanged) {
               changedFiles.push(bucketPath);
@@ -176,7 +177,7 @@ function uploadChangedFilesInDir(pathToUpload, bucketName, distId, verboseMode, 
               if (changedFiles.length > 0) {
                 // eslint-disable-next-line no-console
                 console.log(chalk.yellow(`${fileListLength} objects found, ${changedFiles.length} objects require updates...`));
-                uploadFiles(changedFiles, bucketName, verboseMode, isCli)
+                uploadFiles(pathToUpload, changedFiles, bucketName, verboseMode, isCli)
                   .then((msg) => {
                     resolve({
                       changedFiles,

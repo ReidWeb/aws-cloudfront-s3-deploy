@@ -9,6 +9,7 @@ module.exports = {
   'extends': 'airbnb-base',
   'plugins': [
     'import',
+    'mocha'
   ],
   "rules": {
     "no-plusplus": "off",
