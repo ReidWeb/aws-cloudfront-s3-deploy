@@ -155,7 +155,7 @@ function uploadFiles(pathToUpload, fileList, bucketName, verboseMode, isCli) {
   });
 }
 
-function uploadChangedFilesInDir(pathToUpload, bucketName, distId, verboseMode, isCli) {
+function uploadChangedFilesInDir(pathToUpload, bucketName, verboseMode, isCli) {
   return new Promise((resolve, reject) => {
     const changedFiles = [];
     recursive(pathToUpload, (err, fileList) => {

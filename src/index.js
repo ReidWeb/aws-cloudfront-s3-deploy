@@ -10,7 +10,7 @@ function deploy(path, bucketName, distributionId, profile, verboseMode) {
 
     AWS.config.credentials = new AWS.SharedIniFileCredentials({ profile });
 
-    s3.uploadChangedFilesInDir(path, bucketName, distributionId, verboseMode).then((res) => {
+    s3.uploadChangedFilesInDir(path, bucketName, verboseMode).then((res) => {
       if (distributionId && res.changedFiles.length > 0) {
         console.log(chalk.green(res.message));
         console.log(chalk.yellow(`Commencing invalidation operation for distribution ${distributionId}...`));
