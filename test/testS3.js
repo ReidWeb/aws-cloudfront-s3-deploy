@@ -456,7 +456,7 @@ describe('s3.js [Unit]', () => {
         await uploadFiles('path/to', ['foo.txt'], 'yourBucket', true, true);
         const invocationOne = uploadObjStub.getCall(0);
         // eslint-disable-next-line prefer-destructuring
-        [interceptedArgs] = invocationOne.args[0];
+        interceptedArgs = invocationOne.args[0];
       });
 
       it('then Key should omit target directory', async () => {
@@ -758,6 +758,93 @@ describe('s3.js [Unit]', () => {
         it('should resolve with `Upload complete!`', async () => {
           actual.should.equal('Upload complete!');
         });
+      });
+    });
+  });
+
+  describe('#uploadChangedFilesInDir()', () => {
+    describe('when there are files at the specified path', () => {
+      describe('when no files have changed', () => {
+        it('should resolve with message indicating no file updates were required', async () => {
+        });
+      });
+
+      describe('when files have changed', () => {
+        it('should instigate upload of the changed files', async () => {
+        });
+      });
+
+      describe('when an error occurs checking if a file has changed', () => {
+        it('should reject with an error', async () => {
+        });
+      });
+    });
+
+    describe('when there are no files at the specified path', () => {
+      it('should resolve with a message stating that it could not find any files', async () => {
+        const s3 = rewire('../src/s3');
+        const uploadChangedFilesInDir = s3.__get__('uploadChangedFilesInDir');
+
+        const recursiveStub = sinon.stub();
+        recursiveStub.yields(null, []);
+        s3.__set__('recursive', recursiveStub);
+
+        const actual = await uploadChangedFilesInDir('base', 'myBucket', false, false);
+        actual.message.should.equal('No files found at specified path');
+      });
+    });
+
+    describe('when there is an un-handled error recursively processing the specified path', () => {
+      it('should reject with error', async () => {
+        const s3 = rewire('../src/s3');
+        const uploadChangedFilesInDir = s3.__get__('uploadChangedFilesInDir');
+
+        const recursiveStub = sinon.stub();
+        recursiveStub.yields(new Error('Generic error message'), null);
+        s3.__set__('recursive', recursiveStub);
+
+        try {
+          await uploadChangedFilesInDir('base', 'myBucket', false, false);
+          'I'.should.equal('not called');
+        } catch (e) {
+          e.message.should.equal('Generic error message');
+        }
+      });
+    });
+
+    describe('when the directory specified does not exist', () => {
+      it('should reject with a descript error', async () => {
+        const s3 = rewire('../src/s3');
+        const uploadChangedFilesInDir = s3.__get__('uploadChangedFilesInDir');
+
+        const recursiveStub = sinon.stub();
+        recursiveStub.yields({ code: 'ENOTDIR' }, null);
+        s3.__set__('recursive', recursiveStub);
+
+        try {
+          await uploadChangedFilesInDir('base', 'myBucket', false, false);
+          'I'.should.equal('not called');
+        } catch (e) {
+          e.message.should.equal('Specified path is not a directory, please specify a valid directory path - this module cannot process individual files');
+        }
+      });
+    });
+
+    describe('when the directory specified is not a directory', () => {
+      it('should reject with a descript error', async () => {
+        const s3 = rewire('../src/s3');
+        const uploadChangedFilesInDir = s3.__get__('uploadChangedFilesInDir');
+
+        const recursiveStub = sinon.stub();
+        recursiveStub.yields({ code: 'ENOENT' }, null);
+        s3.__set__('recursive', recursiveStub);
+
+        try {
+          await uploadChangedFilesInDir('base', 'myBucket', false, false);
+          'I'.should.equal('not called');
+        } catch (e) {
+          e.message.should.equal('Specified path does not exist. Please specify a valid directory path.');
+        }
       });
     });
   });
