@@ -3,12 +3,17 @@
 
 tmp
 test
+itest
 tasks
 coverage
 docs
 client
 logo
 integration-tests
+.eslintrc.js
+.travis.yml
+README.md
+CHANGELOG.md
 
 CONTRIBUTING.md
 Gruntfile.coffee
