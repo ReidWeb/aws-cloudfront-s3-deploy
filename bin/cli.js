@@ -16,7 +16,10 @@ if (program.path && program.bucket) {
   deploy(program.path, program.bucket, program.distribution, program.profile, program.verbose, true).then((msg) => {
     console.log(chalk.greenBright(msg));
   }).catch((e) => {
-    console.log(chalk.bold.red(`ERROR: ${e.message}`));
+    if (e.message) {
+      console.log(chalk.bold.red(`ERROR: ${e.message}`));
+    }
+    console.log(chalk.bold.red(`ERROR: ${e}`));
   });
 } else {
   program.outputHelp();
