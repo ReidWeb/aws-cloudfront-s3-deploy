@@ -4,7 +4,7 @@ const AWS = require('aws-sdk');
 const s3 = require('./s3');
 const cloudFront = require('./cloudfront');
 
-function deploy(path, bucketName, distributionId, profile, verboseMode) {
+function deploy(userPath, bucketName, distributionId, profile, verboseMode, isCli) {
   return new Promise((resolve, reject) => {
     console.log(chalk.blue(`Starting deployment of gatsby app to S3 bucket: ${bucketName}...`));
 
