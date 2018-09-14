@@ -159,42 +159,59 @@ function uploadChangedFilesInDir(pathToUpload, bucketName, verboseMode, isCli) {
   return new Promise((resolve, reject) => {
     const changedFiles = [];
     recursive(pathToUpload, (err, fileList) => {
-      const s3 = new AWS.S3();
+      if (err) {
+        if (err.code === 'ENOTDIR') {
+          reject(new Error('Specified path is not a directory, please specify a valid directory path - this module cannot process individual files'));
+        } else if (err.code === 'ENOENT') {
+          reject(new Error('Specified path does not exist. Please specify a valid directory path.'));
+        } else {
+          reject(err);
+        }
+      } else {
+        const s3 = new AWS.S3();
 
-      let testedFiles = 0;
-      const fileListLength = fileList.length;
+        let testedFiles = 0;
+        const fileListLength = fileList.length;
 
-      fileList.forEach((fileName) => {
-        const bucketPath = fileName.substring(pathToUpload.length + 1);
-        hasFileChanged(pathToUpload, bucketPath, bucketName, s3, getFileLastModifiedDate)
-          .then((hasChanged) => {
-            if (hasChanged) {
-              changedFiles.push(bucketPath);
-            }
-            testedFiles++;
+        if (fileListLength === 0) {
+          resolve({
+            changedFiles: [],
+            message: 'No files found at specified path',
+          });
+        } else {
+          fileList.forEach((fileName) => {
+            const bucketPath = fileName.substring(pathToUpload.length + 1);
+            hasFileChanged(pathToUpload, bucketPath, bucketName, s3, getFileLastModifiedDate)
+              .then((hasChanged) => {
+                if (hasChanged) {
+                  changedFiles.push(bucketPath);
+                }
+                testedFiles++;
 
-            if (testedFiles === fileListLength) {
-              if (changedFiles.length > 0) {
-                // eslint-disable-next-line no-console
-                console.log(chalk.yellow(`${fileListLength} objects found, ${changedFiles.length} objects require updates...`));
-                uploadFiles(pathToUpload, changedFiles, bucketName, verboseMode, isCli)
-                  .then((msg) => {
+                if (testedFiles === fileListLength) {
+                  if (changedFiles.length > 0) {
+                    // eslint-disable-next-line no-console
+                    console.log(chalk.yellow(`${fileListLength} objects found, ${changedFiles.length} objects require updates...`));
+                    uploadFiles(pathToUpload, changedFiles, bucketName, verboseMode, isCli)
+                      .then((msg) => {
+                        resolve({
+                          changedFiles,
+                          message: msg,
+                        });
+                      })
+                      .catch(e => reject(e));
+                  } else {
                     resolve({
-                      changedFiles,
-                      message: msg,
+                      changedFiles: [],
+                      message: 'No file updates required, skipping upload...',
                     });
-                  })
-                  .catch(e => reject(e));
-              } else {
-                resolve({
-                  changedFiles: [],
-                  message: 'No file updates required, skipping upload...',
-                });
-              }
-            }
-          })
-          .catch(e => reject(e));
-      });
+                  }
+                }
+              })
+              .catch(e => reject(e));
+          });
+        }
+      }
     });
   });
 }
