@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="1.0.13"></a>
+## [1.0.13](https://github.com/ReidWeb/aws-cloudfront-s3-deploy/compare/v1.0.12...v1.0.13) (2018-09-14)
+
+
+### Bug Fixes
+
+* **index:** Fix params passed down (was missing CLI flag) ([3618ae1](https://github.com/ReidWeb/aws-cloudfront-s3-deploy/commit/3618ae1))
+
+
+### Features
+
+* **s3:** Change from primitive path resolution to using absolute paths ([dbbba6f](https://github.com/ReidWeb/aws-cloudfront-s3-deploy/commit/dbbba6f))
+
+
+
 <a name="1.0.12"></a>
 ## [1.0.12](https://github.com/ReidWeb/aws-cloudfront-s3-deploy/compare/v1.0.11...v1.0.12) (2018-09-14)
 
