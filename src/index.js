@@ -1,6 +1,7 @@
 /* eslint-disable no-console */
 const chalk = require('chalk');
 const AWS = require('aws-sdk');
+const path = require('path');
 const s3 = require('./s3');
 const cloudFront = require('./cloudfront');
 
@@ -10,7 +11,12 @@ function deploy(userPath, bucketName, distributionId, profile, verboseMode, isCl
 
     AWS.config.credentials = new AWS.SharedIniFileCredentials({ profile });
 
-    s3.uploadChangedFilesInDir(path, bucketName, verboseMode).then((res) => {
+    let uploadPath = userPath;
+    if (!path.isAbsolute(userPath)) {
+      uploadPath = path.resolve(userPath);
+    }
+
+    s3.uploadChangedFilesInDir(uploadPath, bucketName, verboseMode, isCli).then((res) => {
       if (distributionId && res.changedFiles.length > 0) {
         console.log(chalk.green(res.message));
         console.log(chalk.yellow(`Commencing invalidation operation for distribution ${distributionId}...`));

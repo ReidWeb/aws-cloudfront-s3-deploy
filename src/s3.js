@@ -4,6 +4,7 @@ const chalk = require('chalk');
 const fs = require('fs');
 const ProgressBar = require('progress');
 const mime = require('mime-types');
+const path = require('path');
 
 const MAX_NUM_REATTEMPTS = 5;
 const BAR_SEGMENTS = 60;
@@ -180,7 +181,7 @@ function uploadChangedFilesInDir(pathToUpload, bucketName, verboseMode, isCli) {
           });
         } else {
           fileList.forEach((fileName) => {
-            const bucketPath = fileName.substring(pathToUpload.length + 1);
+            const bucketPath = path.relative(pathToUpload, fileName);
             hasFileChanged(pathToUpload, bucketPath, bucketName, s3, getFileLastModifiedDate)
               .then((hasChanged) => {
                 if (hasChanged) {
