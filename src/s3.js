@@ -5,6 +5,7 @@ const fs = require('fs');
 const ProgressBar = require('progress');
 const mime = require('mime-types');
 const path = require('path');
+const common = require('./common');
 
 const MAX_NUM_REATTEMPTS = 5;
 const BAR_SEGMENTS = 60;
@@ -25,6 +26,10 @@ function uploadObj(params, s3, reAttemptCount) {
   return new Promise((resolve, reject) => {
     s3.putObject(params, (err) => {
       if (err) {
+        const customErr = common.handleAwsError(err);
+        if (customErr.shouldCauseTermination) {
+          reject(customErr);
+        }
         if (reAttemptCount >= MAX_NUM_REATTEMPTS) {
           // eslint-disable-next-line prettier/prettier
           reject(new Error(`Error: Unable to process object ${params.Key}, reattempted for ${MAX_NUM_REATTEMPTS} (MAX)`));
@@ -53,7 +58,7 @@ function hasFileChanged(pathToFile, fileName, bucketName, s3, localFileModifiedC
         if (err.code === 'NotFound') {
           resolve(true);
         } else {
-          reject(err);
+          reject(common.handleAwsError(err));
         }
       } else {
         const filePath = `${pathToFile}/${fileName}`;

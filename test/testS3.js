@@ -90,6 +90,31 @@ describe('s3.js [Unit]', () => {
         e.message.should.equal('Error: Unable to process object foo, reattempted for 5 (MAX)');
       }
     });
+
+    it('should reject immediately with an error if a fatal error occurs', async () => {
+      const s3 = rewire('../src/s3');
+      const uploadObj = s3.__get__('uploadObj');
+
+      const s3ClientMock = {
+        putObject(params, cb) {
+          cb({ code: 'BadRequest' }, {});
+        },
+      };
+
+      const handleAwsErrStub = sinon.stub();
+      handleAwsErrStub.returns({ shouldCauseTermination: true, message: 'Fatal error' });
+      const commonMock = {
+        handleAwsError: handleAwsErrStub,
+      };
+      s3.__set__({ common: commonMock });
+
+      try {
+        await uploadObj({ Key: 'foo' }, s3ClientMock, 4);
+        'I'.should.equal('Me');
+      } catch (e) {
+        e.message.should.equal('Fatal error');
+      }
+    });
   });
 
   describe('#hasFileChanged()', () => {
@@ -222,6 +247,13 @@ describe('s3.js [Unit]', () => {
             cb(errorRes, {});
           },
         };
+
+        const handleAwsErrStub = sinon.stub();
+        handleAwsErrStub.returns(errorRes);
+        const commonMock = {
+          handleAwsError: handleAwsErrStub,
+        };
+        s3.__set__({ common: commonMock });
 
         function fileModifiedCheckFn() {
           return new Promise((resolve) => {
