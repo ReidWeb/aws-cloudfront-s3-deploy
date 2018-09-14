@@ -305,7 +305,7 @@ describe('s3.js [Unit]', () => {
 
         class ProgressBarMock {
           // eslint-disable-next-line no-empty-function,no-useless-constructor
-          constructor(a, b) {
+          constructor() {
             this.total = 60;
             this.curr = 0;
             constructorCallCount++;
@@ -357,7 +357,7 @@ describe('s3.js [Unit]', () => {
 
         class ProgressBarMock {
           // eslint-disable-next-line no-empty-function,no-useless-constructor
-          constructor(a, b) {
+          constructor() {
             this.total = 60;
             this.curr = 0;
           }
@@ -415,7 +415,7 @@ describe('s3.js [Unit]', () => {
 
         class ProgressBarMock {
           // eslint-disable-next-line no-empty-function,no-useless-constructor
-          constructor(a, b) {
+          constructor() {
             this.total = 60;
             this.curr = 0;
           }
@@ -455,7 +455,8 @@ describe('s3.js [Unit]', () => {
 
         await uploadFiles('path/to', ['foo.txt'], 'yourBucket', true, true);
         const invocationOne = uploadObjStub.getCall(0);
-        interceptedArgs = invocationOne.args[0];
+        // eslint-disable-next-line prefer-destructuring
+        [interceptedArgs] = invocationOne.args[0];
       });
 
       it('then Key should omit target directory', async () => {
@@ -483,7 +484,7 @@ describe('s3.js [Unit]', () => {
 
         class ProgressBarMock {
           // eslint-disable-next-line no-empty-function,no-useless-constructor
-          constructor(a, b) {
+          constructor() {
             this.total = 60;
             this.curr = 0;
           }
@@ -532,7 +533,7 @@ describe('s3.js [Unit]', () => {
 
         class ProgressBarMock {
           // eslint-disable-next-line no-empty-function,no-useless-constructor
-          constructor(a, b) {
+          constructor() {
             this.total = 60;
             this.curr = 0;
           }
@@ -587,7 +588,7 @@ describe('s3.js [Unit]', () => {
 
         class ProgressBarMock {
           // eslint-disable-next-line no-empty-function,no-useless-constructor
-          constructor(a, b) {
+          constructor() {
             this.total = 60;
             this.curr = 0;
           }
@@ -635,7 +636,6 @@ describe('s3.js [Unit]', () => {
     });
 
     describe('when all files have been successfully uploaded', () => {
-
       describe('and program is not being run from CLI', async () => {
         const s3 = rewire('../src/s3');
         const uploadFiles = s3.__get__('uploadFiles');
@@ -643,7 +643,7 @@ describe('s3.js [Unit]', () => {
         let tickCallCount = 0;
         class ProgressBarMock {
           // eslint-disable-next-line no-empty-function,no-useless-constructor
-          constructor(a, b) {
+          constructor() {
             this.total = 60;
             this.curr = 0;
           }
@@ -705,7 +705,7 @@ describe('s3.js [Unit]', () => {
         let tickCallCount = 0;
         class ProgressBarMock {
           // eslint-disable-next-line no-empty-function,no-useless-constructor
-          constructor(a, b) {
+          constructor() {
             this.total = 60;
             this.curr = 0;
           }
