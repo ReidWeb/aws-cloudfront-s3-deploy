@@ -606,7 +606,7 @@ describe('s3.js [Unit]', () => {
         s3.__set__('getFileLastModifiedDate', getFileLastModifiedDateStub);
 
         const lookupFileTypeStub = sinon.stub();
-        lookupFileTypeStub.rejects(new Error('Error foo'));
+        lookupFileTypeStub.resolves('text/yaml');
         s3.__set__('lookupFileType', lookupFileTypeStub);
 
         const fsMock = {
@@ -617,7 +617,7 @@ describe('s3.js [Unit]', () => {
         s3.__set__({ fs: fsMock });
 
         const uploadObjStub = sinon.stub();
-        uploadObjStub.resolves('anything.txt');
+        uploadObjStub.rejects(new Error('upload error'));
         s3.__set__('uploadObj', uploadObjStub);
 
 
@@ -630,7 +630,7 @@ describe('s3.js [Unit]', () => {
           await uploadFiles('path/to', ['foo.txt'], 'yourBucket', true, true);
           'I'.should.not.equal('be called');
         } catch (e) {
-          e.message.should.equal('Error foo');
+          e.message.should.equal('upload error');
         }
       });
     });
@@ -765,17 +765,179 @@ describe('s3.js [Unit]', () => {
   describe('#uploadChangedFilesInDir()', () => {
     describe('when there are files at the specified path', () => {
       describe('when no files have changed', () => {
-        it('should resolve with message indicating no file updates were required', async () => {
+        it('should resolve to object with property message indicating no file updates were required', async () => {
+          const s3 = rewire('../src/s3');
+          const uploadChangedFilesInDir = s3.__get__('uploadChangedFilesInDir');
+
+          const recursiveStub = sinon.stub();
+          recursiveStub.yields(null, ['base/foo.txt', 'base/bar.yml', 'base/path/to/hello.json']);
+          s3.__set__('recursive', recursiveStub);
+
+          const bucketName = 'myBucket';
+
+          const hasFileChangedStub = sinon.stub();
+          hasFileChangedStub.withArgs('base', 'foo.txt', bucketName, sinon.match.any, sinon.match.any).resolves(false);
+          hasFileChangedStub.withArgs('base', 'bar.yml', bucketName, sinon.match.any, sinon.match.any).resolves(false);
+          hasFileChangedStub.withArgs('base', 'path/to/hello.json', bucketName, sinon.match.any, sinon.match.any).resolves(false);
+
+          s3.__set__('hasFileChanged', hasFileChangedStub);
+
+          const actual = await uploadChangedFilesInDir('base', bucketName, false, false);
+
+          actual.message.should.equal('No file updates required, skipping upload...');
+        });
+
+        it('should resolve to object property `changedFiles` that should be an empty array', async () => {
+          const s3 = rewire('../src/s3');
+          const uploadChangedFilesInDir = s3.__get__('uploadChangedFilesInDir');
+
+          const recursiveStub = sinon.stub();
+          recursiveStub.yields(null, ['base/foo.txt', 'base/bar.yml', 'base/path/to/hello.json']);
+          s3.__set__('recursive', recursiveStub);
+
+          const bucketName = 'myBucket';
+
+          const hasFileChangedStub = sinon.stub();
+          hasFileChangedStub.withArgs('base', 'foo.txt', bucketName, sinon.match.any, sinon.match.any).resolves(false);
+          hasFileChangedStub.withArgs('base', 'bar.yml', bucketName, sinon.match.any, sinon.match.any).resolves(false);
+          hasFileChangedStub.withArgs('base', 'path/to/hello.json', bucketName, sinon.match.any, sinon.match.any).resolves(false);
+
+          s3.__set__('hasFileChanged', hasFileChangedStub);
+
+          const actual = await uploadChangedFilesInDir('base', bucketName, false, false);
+
+          actual.changedFiles.length.should.equal(0);
         });
       });
 
       describe('when files have changed', () => {
-        it('should instigate upload of the changed files', async () => {
+        describe('should instigate the upload of the changed files and should resolve an object where', () => {
+          it('the files changed are stored to property `changedFiles`', async () => {
+            const s3 = rewire('../src/s3');
+            const uploadChangedFilesInDir = s3.__get__('uploadChangedFilesInDir');
+
+            const recursiveStub = sinon.stub();
+            recursiveStub.yields(null, ['base/foo.txt', 'base/bar.yml', 'base/path/to/hello.json']);
+            s3.__set__('recursive', recursiveStub);
+
+            const bucketName = 'myBucket';
+
+            const consoleMock = {
+              log() {},
+            };
+            s3.__set__({ console: consoleMock });
+
+            const hasFileChangedStub = sinon.stub();
+            hasFileChangedStub.withArgs('base', 'foo.txt', bucketName, sinon.match.any, sinon.match.any).resolves(true);
+            hasFileChangedStub.withArgs('base', 'bar.yml', bucketName, sinon.match.any, sinon.match.any).resolves(false);
+            hasFileChangedStub.withArgs('base', 'path/to/hello.json', bucketName, sinon.match.any, sinon.match.any).resolves(true);
+
+            s3.__set__('hasFileChanged', hasFileChangedStub);
+
+            const uploadFilesStub = sinon.stub();
+            uploadFilesStub.resolves('Mock Upload complete!');
+
+            s3.__set__('uploadFiles', uploadFilesStub);
+
+            const actual = await uploadChangedFilesInDir('base', bucketName, false, false);
+            actual.changedFiles.should.contain('path/to/hello.json');
+            actual.changedFiles.should.contain('foo.txt');
+            actual.changedFiles.should.not.contain('bar.yml');
+          });
+
+          it('the success message from `uploadFiles` is stored to property `message`', async () => {
+            const s3 = rewire('../src/s3');
+            const uploadChangedFilesInDir = s3.__get__('uploadChangedFilesInDir');
+
+            const recursiveStub = sinon.stub();
+            recursiveStub.yields(null, ['base/foo.txt', 'base/bar.yml', 'base/path/to/hello.json']);
+            s3.__set__('recursive', recursiveStub);
+
+            const bucketName = 'myBucket';
+
+            const consoleMock = {
+              log() {},
+            };
+            s3.__set__({ console: consoleMock });
+
+            const hasFileChangedStub = sinon.stub();
+            hasFileChangedStub.withArgs('base', 'foo.txt', bucketName, sinon.match.any, sinon.match.any).resolves(true);
+            hasFileChangedStub.withArgs('base', 'bar.yml', bucketName, sinon.match.any, sinon.match.any).resolves(false);
+            hasFileChangedStub.withArgs('base', 'path/to/hello.json', bucketName, sinon.match.any, sinon.match.any).resolves(true);
+
+            s3.__set__('hasFileChanged', hasFileChangedStub);
+
+            const uploadFilesStub = sinon.stub();
+            uploadFilesStub.resolves('Mock Upload complete!');
+
+            s3.__set__('uploadFiles', uploadFilesStub);
+
+            const actual = await uploadChangedFilesInDir('base', bucketName, false, false);
+            actual.message.should.equal('Mock Upload complete!');
+          });
         });
       });
 
       describe('when an error occurs checking if a file has changed', () => {
         it('should reject with an error', async () => {
+          const s3 = rewire('../src/s3');
+          const uploadChangedFilesInDir = s3.__get__('uploadChangedFilesInDir');
+
+          const recursiveStub = sinon.stub();
+          recursiveStub.yields(null, ['base/foo.txt', 'base/bar.yml', 'base/path/to/hello.json']);
+          s3.__set__('recursive', recursiveStub);
+
+          const bucketName = 'myBucket';
+
+          const hasFileChangedStub = sinon.stub();
+          hasFileChangedStub.rejects(new Error('my home made error'));
+
+          s3.__set__('hasFileChanged', hasFileChangedStub);
+
+          try {
+            await uploadChangedFilesInDir('base', bucketName, false, false);
+            'i'.should.equal('not invoked');
+          } catch (e) {
+            e.message.should.equal('my home made error');
+          }
+        });
+      });
+
+      describe('when an error occurs uploading the files', () => {
+        it('should reject with an error', async () => {
+          const s3 = rewire('../src/s3');
+          const uploadChangedFilesInDir = s3.__get__('uploadChangedFilesInDir');
+
+          const recursiveStub = sinon.stub();
+          recursiveStub.yields(null, ['base/foo.txt', 'base/bar.yml', 'base/path/to/hello.json']);
+          s3.__set__('recursive', recursiveStub);
+
+          const bucketName = 'myBucket';
+
+
+          const consoleMock = {
+            log() {},
+          };
+          s3.__set__({ console: consoleMock });
+
+          const hasFileChangedStub = sinon.stub();
+          hasFileChangedStub.withArgs('base', 'foo.txt', bucketName, sinon.match.any, sinon.match.any).resolves(true);
+          hasFileChangedStub.withArgs('base', 'bar.yml', bucketName, sinon.match.any, sinon.match.any).resolves(false);
+          hasFileChangedStub.withArgs('base', 'path/to/hello.json', bucketName, sinon.match.any, sinon.match.any).resolves(true);
+
+          s3.__set__('hasFileChanged', hasFileChangedStub);
+
+          const uploadFilesStub = sinon.stub();
+          uploadFilesStub.rejects(new Error('mocked error uploading!'));
+
+          s3.__set__('uploadFiles', uploadFilesStub);
+
+          try {
+            await uploadChangedFilesInDir('base', bucketName, false, false);
+            'i'.should.equal('not invoked');
+          } catch (e) {
+            e.message.should.equal('mocked error uploading!');
+          }
         });
       });
     });
