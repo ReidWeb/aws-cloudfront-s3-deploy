@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="1.0.17"></a>
+## [1.0.17](https://github.com/ReidWeb/aws-cloudfront-s3-deploy/compare/v1.0.16...v1.0.17) (2018-09-14)
+
+
+### Bug Fixes
+
+* **cli:** Fix error handling in CLI ([57658f0](https://github.com/ReidWeb/aws-cloudfront-s3-deploy/commit/57658f0))
+* **tests:** Fixed tests appearing outside of BDD structure ([2a87c28](https://github.com/ReidWeb/aws-cloudfront-s3-deploy/commit/2a87c28))
+
+
+### Features
+
+* **errors:** Externalise error handling to make it reusable ([59c724e](https://github.com/ReidWeb/aws-cloudfront-s3-deploy/commit/59c724e))
+
+
+
 <a name="1.0.16"></a>
 ## [1.0.16](https://github.com/ReidWeb/aws-cloudfront-s3-deploy/compare/v1.0.15...v1.0.16) (2018-09-14)
 
