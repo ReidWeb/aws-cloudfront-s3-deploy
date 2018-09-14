@@ -1,4 +1,5 @@
 const AWS = require('aws-sdk');
+const common = require('./common');
 
 function prefixPaths(files) {
   return new Promise((resolve) => {
@@ -31,9 +32,10 @@ function invalidateDistribution(distId, files) {
 
       cloudfront.createInvalidation(params, (err, data) => {
         if (err) {
-          reject(err);
+          reject(common.handleAwsError(err));
+        } else {
+          resolve(`Invalidation with ID ${data.Invalidation.Id} has started for ${files.length} changed files!`);
         }
-        resolve(`Invalidation with ID ${data.Invalidation.Id} has started for ${files.length} changed files!`);
       });
     });
   });
