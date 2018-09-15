@@ -1006,6 +1006,69 @@ describe('s3.js [Unit]', () => {
         });
       });
 
+      describe('when a complete re-upload is requested', () => {
+        describe('should instigate the upload of all files and should resolve an object where', () => {
+          it('the files updated are stored to property `changedFiles`', async () => {
+            const s3 = rewire('../src/s3');
+            const uploadChangedFilesInDir = s3.__get__('uploadChangedFilesInDir');
+
+            const recursiveStub = sinon.stub();
+            recursiveStub.yields(null, ['base/foo.txt', 'base/bar.yml', 'base/path/to/hello.json']);
+            s3.__set__('recursive', recursiveStub);
+
+            const bucketName = 'myBucket';
+
+            const consoleMock = {
+              log() {},
+            };
+            s3.__set__({ console: consoleMock });
+
+            const hasFileChangedStub = sinon.spy();
+
+            s3.__set__('hasFileChanged', hasFileChangedStub);
+
+            const uploadFilesStub = sinon.stub();
+            uploadFilesStub.resolves('Mock Upload complete!');
+
+            s3.__set__('uploadFiles', uploadFilesStub);
+
+            const actual = await uploadChangedFilesInDir('base', bucketName, { reuploadAll: true });
+            actual.changedFiles.should.contain('path/to/hello.json');
+            actual.changedFiles.should.contain('foo.txt');
+            actual.changedFiles.should.contain('bar.yml');
+            sinon.assert.notCalled(hasFileChangedStub);
+          });
+
+          it('the success message from `uploadFiles` is stored to property `message`', async () => {
+            const s3 = rewire('../src/s3');
+            const uploadChangedFilesInDir = s3.__get__('uploadChangedFilesInDir');
+
+            const recursiveStub = sinon.stub();
+            recursiveStub.yields(null, ['base/foo.txt', 'base/bar.yml', 'base/path/to/hello.json']);
+            s3.__set__('recursive', recursiveStub);
+
+            const bucketName = 'myBucket';
+
+            const consoleMock = {
+              log() {},
+            };
+            s3.__set__({ console: consoleMock });
+
+            const hasFileChangedStub = sinon.spy();
+
+            s3.__set__('hasFileChanged', hasFileChangedStub);
+
+            const uploadFilesStub = sinon.stub();
+            uploadFilesStub.resolves('Mock Upload complete!');
+
+            s3.__set__('uploadFiles', uploadFilesStub);
+
+            const actual = await uploadChangedFilesInDir('base', bucketName, { reuploadAll: true });
+            actual.message.should.equal('Mock Upload complete!');
+          });
+        });
+      });
+
       describe('when an error occurs checking if a file has changed', () => {
         it('should reject with an error', async () => {
           const s3 = rewire('../src/s3');
@@ -1032,7 +1095,7 @@ describe('s3.js [Unit]', () => {
       });
 
       describe('when an error occurs uploading the files', () => {
-        it('should reject with an error', async () => {
+        it('should reject with an error when uploading changed files', async () => {
           const s3 = rewire('../src/s3');
           const uploadChangedFilesInDir = s3.__get__('uploadChangedFilesInDir');
 
@@ -1062,6 +1125,39 @@ describe('s3.js [Unit]', () => {
 
           try {
             await uploadChangedFilesInDir('base', bucketName);
+            'i'.should.equal('not invoked');
+          } catch (e) {
+            e.message.should.equal('mocked error uploading!');
+          }
+        });
+
+        it('should reject with an error when uploading all files', async () => {
+          const s3 = rewire('../src/s3');
+          const uploadChangedFilesInDir = s3.__get__('uploadChangedFilesInDir');
+
+          const recursiveStub = sinon.stub();
+          recursiveStub.yields(null, ['base/foo.txt', 'base/bar.yml', 'base/path/to/hello.json']);
+          s3.__set__('recursive', recursiveStub);
+
+          const bucketName = 'myBucket';
+
+
+          const consoleMock = {
+            log() {},
+          };
+          s3.__set__({ console: consoleMock });
+
+          const hasFileChangedStub = sinon.stub();
+
+          s3.__set__('hasFileChanged', hasFileChangedStub);
+
+          const uploadFilesStub = sinon.stub();
+          uploadFilesStub.rejects(new Error('mocked error uploading!'));
+
+          s3.__set__('uploadFiles', uploadFilesStub);
+
+          try {
+            await uploadChangedFilesInDir('base', bucketName, { reuploadAll: true });
             'i'.should.equal('not invoked');
           } catch (e) {
             e.message.should.equal('mocked error uploading!');

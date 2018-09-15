@@ -14,8 +14,12 @@ function prefixPaths(files) {
   });
 }
 
-function invalidateDistribution(distId, files) {
+function invalidateDistribution(distId, files, additionalParams) {
   return new Promise((resolve, reject) => {
+    const fileCount = files.length;
+    if (additionalParams && additionalParams.reuploadAll) {
+      files = ['*'];
+    }
     prefixPaths(files).then((prefixedFiles) => {
       const cloudfront = new AWS.CloudFront({ apiVersion: '2018-06-18' });
 
@@ -35,7 +39,7 @@ function invalidateDistribution(distId, files) {
           reject(common.handleAwsError(err));
         } else {
           const res = {
-            message: `Invalidation with ID ${data.Invalidation.Id} has started for ${files.length} changed files!`,
+            message: `Invalidation with ID ${data.Invalidation.Id} has started for ${fileCount} changed files!`,
             changedFiles: files,
             invalidationId: data.Invalidation.Id,
           };

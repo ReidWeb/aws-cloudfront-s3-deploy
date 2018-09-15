@@ -69,6 +69,59 @@ describe('cloudfront.js [Unit]', () => {
           res.changedFiles.should.equal(files);
         });
       });
+
+      describe('when a complete reupload is requested', () => {
+        describe('should resolve with an object', () => {
+          it('with message containing detail on the invalidation', async () => {
+            const cloudfront = rewire('../src/cloudfront');
+
+            const invalidateDistribution = cloudfront.__get__('invalidateDistribution');
+
+            class CloudFrontMock {
+              // eslint-disable-next-line no-empty-function,no-useless-constructor
+              constructor() {
+              }
+
+              // eslint-disable-next-line class-methods-use-this
+              createInvalidation(params, callback) {
+                callback(null, { Invalidation: { Id: 'INVALIDATION_ID' } });
+              }
+            }
+
+            sinon.stub(CloudFrontMock.prototype, 'constructor');
+
+            cloudfront.__set__({ AWS: { CloudFront: CloudFrontMock } });
+            const files = ['/foo.txt,', 'bar.yml'];
+            const res = await invalidateDistribution('foo', files, { reuploadAll: true });
+            res.message.should.equal('Invalidation with ID INVALIDATION_ID has started for 2 changed files!');
+          });
+
+          it('with key containing the `*` path used in the invalidation', async () => {
+            const cloudfront = rewire('../src/cloudfront');
+
+            const invalidateDistribution = cloudfront.__get__('invalidateDistribution');
+
+            class CloudFrontMock {
+              // eslint-disable-next-line no-empty-function,no-useless-constructor
+              constructor() {
+              }
+
+              // eslint-disable-next-line class-methods-use-this
+              createInvalidation(params, callback) {
+                callback(null, { Invalidation: { Id: 'INVALIDATION_ID' } });
+              }
+            }
+
+            sinon.stub(CloudFrontMock.prototype, 'constructor');
+
+            cloudfront.__set__({ AWS: { CloudFront: CloudFrontMock } });
+            const files = ['/foo.txt,', 'bar.yml'];
+            const res = await invalidateDistribution('foo', files, { reuploadAll: true });
+            res.changedFiles.length.should.equal(1);
+            res.changedFiles.should.contain('*');
+          });
+        });
+      });
     });
 
     describe('when an error is encountered', () => {

@@ -46,48 +46,27 @@ function deploy(userPath, bucketName, additionalParams) {
   return new Promise(async (resolve, reject) => {
     try {
       await validateParams(additionalParams);
-    } catch (e) {
-      reject(e);
-    }
 
-    setAwsConfig(additionalParams);
+      setAwsConfig(additionalParams);
 
-    console.log(chalk.blue(`Starting deployment of gatsby app to S3 bucket: ${bucketName}...`));
+      console.log(chalk.blue(`Starting deployment of gatsby app to S3 bucket: ${bucketName}...`));
 
-    let uploadPath = userPath;
-    if (!path.isAbsolute(userPath)) {
-      uploadPath = path.resolve(userPath);
-    }
+      let uploadPath = userPath;
+      if (!path.isAbsolute(userPath)) {
+        uploadPath = path.resolve(userPath);
+      }
 
-    try {
       // eslint-disable-next-line max-len
       const uploadResult = await s3.uploadChangedFilesInDir(uploadPath, bucketName, additionalParams);
 
       // eslint-disable-next-line max-len
-      if (!additionalParams.distribution || !additionalParams.distribution.id || uploadResult.changedFiles.length > 0) { // If no invalidation required
+      if (!additionalParams.distribution || !additionalParams.distribution.id || uploadResult.changedFiles.length === 0) { // If no invalidation required
         resolve(uploadResult);
-        // eslint-disable-next-line max-len
-      } else if (additionalParams.distribution.invalidateAll) { // Invalidation of specific files required
-        console.log(chalk.green(uploadResult.message));
-        console.log(chalk.yellow(`Commencing invalidation operation for root of distribution ${additionalParams.distribution.id}...`));
-
-        try {
-          const invalidationResult = await cloudFront.invalidateDistribution(additionalParams.distribution.id, ['*']);
-          invalidationResult.message = `Invalidation with ID ${invalidationResult.invalidationId} has started for /*!`;
-          resolve(invalidationResult);
-        } catch (e) {
-          reject(e);
-        }
-      } else { // Invalidation of specific files required
+      } else if (additionalParams.distribution.id) {
         console.log(chalk.green(uploadResult.message));
         console.log(chalk.yellow(`Commencing invalidation operation for distribution ${additionalParams.distribution.id}...`));
-
-        try {
-          // eslint-disable-next-line max-len
-          resolve(await cloudFront.invalidateDistribution(additionalParams.distribution.id, uploadResult.changedFiles));
-        } catch (e) {
-          reject(e);
-        }
+        // eslint-disable-next-line max-len
+        resolve(await cloudFront.invalidateDistribution(additionalParams.distribution.id, uploadResult.changedFiles, additionalParams));
       }
     } catch (e) {
       reject(e);

@@ -187,36 +187,52 @@ function uploadChangedFilesInDir(pathToUpload, bucketName, additionalParams) {
         } else {
           fileList.forEach((fileName) => {
             const bucketPath = path.relative(pathToUpload, fileName);
-            hasFileChanged(pathToUpload, bucketPath, bucketName, s3, getFileLastModifiedDate)
-              .then((hasChanged) => {
-                if (hasChanged) {
-                  changedFiles.push(bucketPath);
-                }
-                testedFiles++;
+            if (additionalParams && additionalParams.reuploadAll) {
+              // eslint-disable-next-line no-console
+              console.log(chalk.yellow(`${fileListLength} objects found, re-uploading all...`));
+              // eslint-disable-next-line max-len
+              const fileListWithNoBase = fileList.map(currentFilePath => path.relative(pathToUpload, currentFilePath));
 
-                if (testedFiles === fileListLength) {
-                  if (changedFiles.length > 0) {
-                    // eslint-disable-next-line no-console
-                    console.log(chalk.yellow(`${fileListLength} objects found, ${changedFiles.length} objects require updates...`));
-                    uploadFiles(pathToUpload, changedFiles, bucketName, additionalParams)
-                      .then((msg) => {
-                        resolve({
-                          changedFiles,
-                          message: msg,
-                        });
-                      })
-                      .catch(e => reject(e));
-                  } else {
-                    resolve({
-                      changedFiles: [],
-                      message: 'No file updates required, skipping upload...',
-                    });
+              uploadFiles(pathToUpload, fileListWithNoBase, bucketName, additionalParams)
+                .then((msg) => {
+                  resolve({
+                    changedFiles: fileListWithNoBase,
+                    message: msg,
+                  });
+                })
+                .catch(e => reject(e));
+            } else {
+              hasFileChanged(pathToUpload, bucketPath, bucketName, s3, getFileLastModifiedDate)
+                .then((hasChanged) => {
+                  if (hasChanged) {
+                    changedFiles.push(bucketPath);
                   }
-                }
-              })
-              .catch((e) => {
-                reject(e);
-              });
+                  testedFiles++;
+
+                  if (testedFiles === fileListLength) {
+                    if (changedFiles.length > 0) {
+                      // eslint-disable-next-line no-console
+                      console.log(chalk.yellow(`${fileListLength} objects found, ${changedFiles.length} objects require updates...`));
+                      uploadFiles(pathToUpload, changedFiles, bucketName, additionalParams)
+                        .then((msg) => {
+                          resolve({
+                            changedFiles,
+                            message: msg,
+                          });
+                        })
+                        .catch(e => reject(e));
+                    } else {
+                      resolve({
+                        changedFiles: [],
+                        message: 'No file updates required, skipping upload...',
+                      });
+                    }
+                  }
+                })
+                .catch((e) => {
+                  reject(e);
+                });
+            }
           });
         }
       }
