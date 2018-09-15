@@ -79,7 +79,7 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### Bug Fixes
 
-* **s3:** Remove distributionId from params of uploadChangedFilesInDir ([c1647b1](https://github.com/ReidWeb/aws-cloudfront-s3-deploy/commit/c1647b1))
+* **s3:** Remove distributionId from params of uploadFilesInDir ([c1647b1](https://github.com/ReidWeb/aws-cloudfront-s3-deploy/commit/c1647b1))
 
 
 ### Features

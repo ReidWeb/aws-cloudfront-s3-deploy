@@ -175,11 +175,11 @@ describe('index.js [Unit]', () => {
         };
         index.__set__({ console: consoleMock });
 
-        const uploadChangedFilesInDirStub = sinon.stub();
-        uploadChangedFilesInDirStub.resolves({ changedFiles: ['myFile.txt', 'yourFile.json'], message: 'a message' });
+        const uploadFilesInDirStub = sinon.stub();
+        uploadFilesInDirStub.resolves({ changedFiles: ['myFile.txt', 'yourFile.json'], message: 'a message' });
 
         const s3Stub = {
-          uploadChangedFilesInDir: uploadChangedFilesInDirStub,
+          uploadFilesInDir: uploadFilesInDirStub,
         };
 
         index.__set__({ s3: s3Stub });
@@ -247,11 +247,11 @@ describe('index.js [Unit]', () => {
         };
         index.__set__({ console: consoleMock });
 
-        const uploadChangedFilesInDirStub = sinon.stub();
-        uploadChangedFilesInDirStub.rejects(new Error('Error encountered'));
+        const uploadFilesInDirStub = sinon.stub();
+        uploadFilesInDirStub.rejects(new Error('Error encountered'));
 
         const s3Stub = {
-          uploadChangedFilesInDir: uploadChangedFilesInDirStub,
+          uploadFilesInDir: uploadFilesInDirStub,
         };
 
         index.__set__({ s3: s3Stub });

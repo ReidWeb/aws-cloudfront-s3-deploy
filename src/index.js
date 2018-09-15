@@ -79,7 +79,7 @@ function deploy(userPath, bucketName, additionalParams) {
       }
 
       // eslint-disable-next-line max-len
-      const uploadResult = await s3.uploadChangedFilesInDir(uploadPath, bucketName, additionalParams);
+      const uploadResult = await s3.uploadFilesInDir(uploadPath, bucketName, additionalParams);
 
       // eslint-disable-next-line max-len
       if (!additionalParams || !additionalParams.distribution || !additionalParams.distribution.id || uploadResult.changedFiles.length === 0) { // If no invalidation required

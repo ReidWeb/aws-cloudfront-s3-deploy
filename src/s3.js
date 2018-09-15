@@ -184,7 +184,7 @@ function uploadFiles(pathToUpload, fileList, bucketName, additionalParams) {
   });
 }
 
-function uploadChangedFilesInDir(pathToUpload, bucketName, additionalParams) {
+function uploadFilesInDir(pathToUpload, bucketName, additionalParams) {
   return new Promise((resolve, reject) => {
     const changedFiles = [];
     recursive(pathToUpload, (err, fileList) => {
@@ -267,4 +267,4 @@ function uploadChangedFilesInDir(pathToUpload, bucketName, additionalParams) {
 }
 
 
-module.exports.uploadChangedFilesInDir = uploadChangedFilesInDir;
+module.exports.uploadFilesInDir = uploadFilesInDir;
