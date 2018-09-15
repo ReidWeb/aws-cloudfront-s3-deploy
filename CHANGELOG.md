@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="1.1.0"></a>
+# [1.1.0](https://github.com/ReidWeb/aws-cloudfront-s3-deploy/compare/v1.0.18...v1.1.0) (2018-09-15)
+
+
+### Features
+
+* **all:** Change how params are handled ([e0e5b71](https://github.com/ReidWeb/aws-cloudfront-s3-deploy/commit/e0e5b71))
+
+
+
 <a name="1.0.18"></a>
 ## [1.0.18](https://github.com/ReidWeb/aws-cloudfront-s3-deploy/compare/v1.0.17...v1.0.18) (2018-09-14)
 
