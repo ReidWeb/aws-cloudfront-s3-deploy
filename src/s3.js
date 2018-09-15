@@ -92,7 +92,7 @@ function lookupFileType(filePath) {
   });
 }
 
-function uploadFiles(pathToUpload, fileList, bucketName, verboseMode, isCli) {
+function uploadFiles(pathToUpload, fileList, bucketName, additionalParams) {
   const s3 = new AWS.S3();
   return new Promise((resolve, reject) => {
     const fileListLength = fileList.length;
@@ -101,7 +101,7 @@ function uploadFiles(pathToUpload, fileList, bucketName, verboseMode, isCli) {
     let itemsProcessed = 0;
     let bar;
 
-    if (isCli) {
+    if (additionalParams && additionalParams.cli) {
       bar = new ProgressBar('Uploading [:bar]  :percent', {
         total: BAR_SEGMENTS,
         clear: true,
@@ -124,7 +124,7 @@ function uploadFiles(pathToUpload, fileList, bucketName, verboseMode, isCli) {
           };
           uploadObj(params, s3, 0)
             .then((fileName) => {
-              if (verboseMode) {
+              if (additionalParams && additionalParams.verbose) {
                 // eslint-disable-next-line no-console
                 console.log(chalk.green(`Successfully uploaded ${fileName} to ${bucketName}`));
               }
@@ -132,14 +132,14 @@ function uploadFiles(pathToUpload, fileList, bucketName, verboseMode, isCli) {
 
               if (itemsProcessed >= nextIncrement) {
                 nextIncrement += barIncrement;
-                if (isCli) {
+                if (additionalParams && additionalParams.cli) {
                   bar.tick();
                 }
               }
 
               if (itemsProcessed === fileListLength) {
                 let i;
-                if (isCli) {
+                if (additionalParams && additionalParams.cli) {
                   for (i = bar.total - bar.curr; i >= 0; i--) {
                     bar.tick();
 
@@ -161,7 +161,7 @@ function uploadFiles(pathToUpload, fileList, bucketName, verboseMode, isCli) {
   });
 }
 
-function uploadChangedFilesInDir(pathToUpload, bucketName, verboseMode, isCli) {
+function uploadChangedFilesInDir(pathToUpload, bucketName, additionalParams) {
   return new Promise((resolve, reject) => {
     const changedFiles = [];
     recursive(pathToUpload, (err, fileList) => {
@@ -198,7 +198,7 @@ function uploadChangedFilesInDir(pathToUpload, bucketName, verboseMode, isCli) {
                   if (changedFiles.length > 0) {
                     // eslint-disable-next-line no-console
                     console.log(chalk.yellow(`${fileListLength} objects found, ${changedFiles.length} objects require updates...`));
-                    uploadFiles(pathToUpload, changedFiles, bucketName, verboseMode, isCli)
+                    uploadFiles(pathToUpload, changedFiles, bucketName, additionalParams)
                       .then((msg) => {
                         resolve({
                           changedFiles,

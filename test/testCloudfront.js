@@ -22,26 +22,52 @@ describe('cloudfront.js [Unit]', () => {
 
   describe('#invalidateDistribution()', () => {
     describe('when successful', () => {
-      it('should resolve with a message containing detail on the invalidation', async () => {
-        const cloudfront = rewire('../src/cloudfront');
+      describe('should resolve with an object', () => {
+        it('with message containing detail on the invalidation', async () => {
+          const cloudfront = rewire('../src/cloudfront');
 
-        const invalidateDistribution = cloudfront.__get__('invalidateDistribution');
+          const invalidateDistribution = cloudfront.__get__('invalidateDistribution');
 
-        class CloudFrontMock {
-          // eslint-disable-next-line no-empty-function,no-useless-constructor
-          constructor() {
+          class CloudFrontMock {
+            // eslint-disable-next-line no-empty-function,no-useless-constructor
+            constructor() {
+            }
+
+            // eslint-disable-next-line class-methods-use-this
+            createInvalidation(params, callback) {
+              callback(null, { Invalidation: { Id: 'INVALIDATION_ID' } });
+            }
           }
+          sinon.stub(CloudFrontMock.prototype, 'constructor');
 
-          // eslint-disable-next-line class-methods-use-this
-          createInvalidation(params, callback) {
-            callback(null, { Invalidation: { Id: 'INVALIDATION_ID' } });
+          cloudfront.__set__({ AWS: { CloudFront: CloudFrontMock } });
+          const files = ['/foo.txt,', 'bar.yml'];
+          const res = await invalidateDistribution('foo', files);
+          res.message.should.equal('Invalidation with ID INVALIDATION_ID has started for 2 changed files!');
+        });
+
+        it('with key containing files invalidated in the invalidation', async () => {
+          const cloudfront = rewire('../src/cloudfront');
+
+          const invalidateDistribution = cloudfront.__get__('invalidateDistribution');
+
+          class CloudFrontMock {
+            // eslint-disable-next-line no-empty-function,no-useless-constructor
+            constructor() {
+            }
+
+            // eslint-disable-next-line class-methods-use-this
+            createInvalidation(params, callback) {
+              callback(null, { Invalidation: { Id: 'INVALIDATION_ID' } });
+            }
           }
-        }
-        sinon.stub(CloudFrontMock.prototype, 'constructor');
+          sinon.stub(CloudFrontMock.prototype, 'constructor');
 
-        cloudfront.__set__({ AWS: { CloudFront: CloudFrontMock } });
-        const msg = await invalidateDistribution('foo', ['/foo.txt,', 'bar.yml']);
-        msg.should.equal('Invalidation with ID INVALIDATION_ID has started for 2 changed files!');
+          cloudfront.__set__({ AWS: { CloudFront: CloudFrontMock } });
+          const files = ['/foo.txt,', 'bar.yml'];
+          const res = await invalidateDistribution('foo', files);
+          res.changedFiles.should.equal(files);
+        });
       });
     });
 

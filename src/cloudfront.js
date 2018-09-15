@@ -34,7 +34,11 @@ function invalidateDistribution(distId, files) {
         if (err) {
           reject(common.handleAwsError(err));
         } else {
-          resolve(`Invalidation with ID ${data.Invalidation.Id} has started for ${files.length} changed files!`);
+          const res = {
+            message: `Invalidation with ID ${data.Invalidation.Id} has started for ${files.length} changed files!`,
+            changedFiles: files,
+          };
+          resolve(res);
         }
       });
     });

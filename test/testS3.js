@@ -376,7 +376,7 @@ describe('s3.js [Unit]', () => {
         for (i = 0; i < 2; i++) {
           dummyArr[i] = `foo${i}.txt`;
         }
-        await uploadFiles('path/to', dummyArr, 'yourBucket', false, true);
+        await uploadFiles('path/to', dummyArr, 'yourBucket', { cli: true });
         constructorCallCount.should.equal(1);
       });
     });
@@ -433,7 +433,7 @@ describe('s3.js [Unit]', () => {
         for (i = 0; i < 9; i++) {
           dummyArr[i] = `foo${i}.txt`;
         }
-        await uploadFiles('path/to', dummyArr, 'yourBucket', true, true);
+        await uploadFiles('path/to', dummyArr, 'yourBucket', { cli: false, verbose: true });
         (logSpy.callCount).should.equal(9);
       });
     });
@@ -485,7 +485,7 @@ describe('s3.js [Unit]', () => {
         };
         s3.__set__({ console: consoleMock });
 
-        await uploadFiles('path/to', ['foo.txt'], 'yourBucket', true, true);
+        await uploadFiles('path/to', ['foo.txt'], 'yourBucket');
         const invocationOne = uploadObjStub.getCall(0);
         // eslint-disable-next-line prefer-destructuring
         interceptedArgs = invocationOne.args[0];
@@ -554,7 +554,7 @@ describe('s3.js [Unit]', () => {
         };
         s3.__set__({ console: consoleMock });
 
-        await uploadFiles('path/to', ['foo.txt'], 'yourBucket', true, true);
+        await uploadFiles('path/to', ['foo.txt'], 'yourBucket');
         sinon.assert.calledWith(lookupFileTypeStub, 'path/to/foo.txt');
       });
 
@@ -604,7 +604,7 @@ describe('s3.js [Unit]', () => {
         s3.__set__({ console: consoleMock });
 
         try {
-          await uploadFiles('path/to', ['foo.txt'], 'yourBucket', true, true);
+          await uploadFiles('path/to', ['foo.txt'], 'yourBucket');
           'I'.should.equal('Not be called');
         } catch (e) {
           e.message.should.equal('An error');
@@ -659,7 +659,7 @@ describe('s3.js [Unit]', () => {
         s3.__set__({ console: consoleMock });
 
         try {
-          await uploadFiles('path/to', ['foo.txt'], 'yourBucket', true, true);
+          await uploadFiles('path/to', ['foo.txt'], 'yourBucket');
           'I'.should.not.equal('be called');
         } catch (e) {
           e.message.should.equal('upload error');
@@ -720,7 +720,7 @@ describe('s3.js [Unit]', () => {
           for (i = 0; i < 100; i++) {
             dummyArr[i] = `foo${i}.txt`;
           }
-          await uploadFiles('path/to', dummyArr, 'yourBucket', true, false);
+          await uploadFiles('path/to', dummyArr, 'yourBucket');
           tickCallCount.should.equal(0);
         });
 
@@ -773,7 +773,7 @@ describe('s3.js [Unit]', () => {
           for (i = 0; i < 100; i++) {
             dummyArr[i] = `foo${i}.txt`;
           }
-          const actual = await uploadFiles('path/to', dummyArr, 'yourBucket', true, false);
+          const actual = await uploadFiles('path/to', dummyArr, 'yourBucket');
           actual.should.equal('Upload complete!');
         });
       });
@@ -830,7 +830,7 @@ describe('s3.js [Unit]', () => {
           for (i = 0; i < 100; i++) {
             dummyArr[i] = `foo${i}.txt`;
           }
-          await uploadFiles('path/to', dummyArr, 'yourBucket', true, true);
+          await uploadFiles('path/to', dummyArr, 'yourBucket', { cli: true });
           tickCallCount.should.equal(61);
         });
 
@@ -883,7 +883,7 @@ describe('s3.js [Unit]', () => {
           for (i = 0; i < 100; i++) {
             dummyArr[i] = `foo${i}.txt`;
           }
-          const actual = await uploadFiles('path/to', dummyArr, 'yourBucket', true, true);
+          const actual = await uploadFiles('path/to', dummyArr, 'yourBucket');
           actual.should.equal('Upload complete!');
         });
       });
@@ -910,7 +910,7 @@ describe('s3.js [Unit]', () => {
 
           s3.__set__('hasFileChanged', hasFileChangedStub);
 
-          const actual = await uploadChangedFilesInDir('base', bucketName, false, false);
+          const actual = await uploadChangedFilesInDir('base', bucketName);
 
           actual.message.should.equal('No file updates required, skipping upload...');
         });
@@ -932,7 +932,7 @@ describe('s3.js [Unit]', () => {
 
           s3.__set__('hasFileChanged', hasFileChangedStub);
 
-          const actual = await uploadChangedFilesInDir('base', bucketName, false, false);
+          const actual = await uploadChangedFilesInDir('base', bucketName);
 
           actual.changedFiles.length.should.equal(0);
         });
@@ -967,7 +967,7 @@ describe('s3.js [Unit]', () => {
 
             s3.__set__('uploadFiles', uploadFilesStub);
 
-            const actual = await uploadChangedFilesInDir('base', bucketName, false, false);
+            const actual = await uploadChangedFilesInDir('base', bucketName);
             actual.changedFiles.should.contain('path/to/hello.json');
             actual.changedFiles.should.contain('foo.txt');
             actual.changedFiles.should.not.contain('bar.yml');
@@ -1000,7 +1000,7 @@ describe('s3.js [Unit]', () => {
 
             s3.__set__('uploadFiles', uploadFilesStub);
 
-            const actual = await uploadChangedFilesInDir('base', bucketName, false, false);
+            const actual = await uploadChangedFilesInDir('base', bucketName);
             actual.message.should.equal('Mock Upload complete!');
           });
         });
@@ -1023,7 +1023,7 @@ describe('s3.js [Unit]', () => {
           s3.__set__('hasFileChanged', hasFileChangedStub);
 
           try {
-            await uploadChangedFilesInDir('base', bucketName, false, false);
+            await uploadChangedFilesInDir('base', bucketName);
             'i'.should.equal('not invoked');
           } catch (e) {
             e.message.should.equal('my home made error');
@@ -1061,7 +1061,7 @@ describe('s3.js [Unit]', () => {
           s3.__set__('uploadFiles', uploadFilesStub);
 
           try {
-            await uploadChangedFilesInDir('base', bucketName, false, false);
+            await uploadChangedFilesInDir('base', bucketName);
             'i'.should.equal('not invoked');
           } catch (e) {
             e.message.should.equal('mocked error uploading!');
@@ -1079,7 +1079,7 @@ describe('s3.js [Unit]', () => {
         recursiveStub.yields(null, []);
         s3.__set__('recursive', recursiveStub);
 
-        const actual = await uploadChangedFilesInDir('base', 'myBucket', false, false);
+        const actual = await uploadChangedFilesInDir('base', 'myBucket');
         actual.message.should.equal('No files found at specified path');
       });
     });
@@ -1094,7 +1094,7 @@ describe('s3.js [Unit]', () => {
         s3.__set__('recursive', recursiveStub);
 
         try {
-          await uploadChangedFilesInDir('base', 'myBucket', false, false);
+          await uploadChangedFilesInDir('base', 'myBucket');
           'I'.should.equal('not called');
         } catch (e) {
           e.message.should.equal('Generic error message');
@@ -1112,7 +1112,7 @@ describe('s3.js [Unit]', () => {
         s3.__set__('recursive', recursiveStub);
 
         try {
-          await uploadChangedFilesInDir('base', 'myBucket', false, false);
+          await uploadChangedFilesInDir('base', 'myBucket');
           'I'.should.equal('not called');
         } catch (e) {
           e.message.should.equal('Specified path is not a directory, please specify a valid directory path - this module cannot process individual files');
@@ -1130,7 +1130,7 @@ describe('s3.js [Unit]', () => {
         s3.__set__('recursive', recursiveStub);
 
         try {
-          await uploadChangedFilesInDir('base', 'myBucket', false, false);
+          await uploadChangedFilesInDir('base', 'myBucket');
           'I'.should.equal('not called');
         } catch (e) {
           e.message.should.equal('Specified path does not exist. Please specify a valid directory path.');
