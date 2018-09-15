@@ -208,11 +208,14 @@ function uploadChangedFilesInDir(pathToUpload, bucketName, additionalParams) {
             message: 'No files found at specified path',
           });
         } else {
+          if (!additionalParams || !additionalParams.reuploadAll) {
+            console.log(chalk.blue('Determining objects files...'));
+          }
           fileList.forEach((fileName) => {
             const bucketPath = path.relative(pathToUpload, fileName);
             if (additionalParams && additionalParams.reuploadAll) {
               // eslint-disable-next-line no-console
-              console.log(chalk.yellow(`${fileListLength} objects found, re-uploading all...`));
+              console.log(chalk.yellow(`${fileListLength} objects found, re-uploading all to S3 Bucket: ${bucketName}`));
               // eslint-disable-next-line max-len
               const fileListWithNoBase = fileList.map(currentFilePath => path.relative(pathToUpload, currentFilePath));
 
@@ -235,7 +238,7 @@ function uploadChangedFilesInDir(pathToUpload, bucketName, additionalParams) {
                   if (testedFiles === fileListLength) {
                     if (changedFiles.length > 0) {
                       // eslint-disable-next-line no-console
-                      console.log(chalk.yellow(`${fileListLength} objects found, ${changedFiles.length} objects require updates...`));
+                      console.log(chalk.yellow(`${fileListLength} objects found, uploading ${changedFiles.length} objects that require updates to S3 Bucket: ${bucketName}...`));
                       uploadFiles(pathToUpload, changedFiles, bucketName, additionalParams)
                         .then((msg) => {
                           resolve({

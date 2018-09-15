@@ -73,8 +73,6 @@ function deploy(userPath, bucketName, additionalParams) {
 
       setAwsConfig(additionalParams);
 
-      console.log(chalk.blue(`Starting deployment of gatsby app to S3 bucket: ${bucketName}...`));
-
       let uploadPath = userPath;
       if (!path.isAbsolute(userPath)) {
         uploadPath = path.resolve(userPath);
