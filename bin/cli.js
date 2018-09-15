@@ -32,11 +32,40 @@ program
   .option('-b, --bucket <required>', 'bucket name')
   .option('-d, --distribution [id]', 'cloudfront distribution id')
   .option('-p, --profile [profile name]', 'profile to use')
-  .option('-V, --verbose', 'run in verbose mode')
+  .option('-i, --keyId [keyId]', 'AWS access key ID')
+  .option('-k, --accessKey [accessKey]', 'AWS access key')
+  .option('-r, --reupload', 'Re-upload all items')
+  .option('-v, --verbose', 'run in verbose mode')
   .parse(process.argv);
 
 if (program.path && program.bucket) {
-  deploy(program.path, program.bucket, program.distribution, program.profile, program.verbose, true).then((msg) => {
+  const additionalParams = {};
+  additionalParams.cli = true;
+  additionalParams.verbose = program.verbose;
+  additionalParams.reuploadAll = program.reupload;
+
+  if (program.distribution) {
+    additionalParams.distribution = {};
+    additionalParams.distribution.id = program.distribution;
+  }
+
+  if (program.profile || program.key || program.keyId) {
+    additionalParams.authentication = {};
+  }
+
+  if (program.profile) {
+    additionalParams.authentication.profile = program.profile;
+  }
+
+  if (program.accessKey) {
+    additionalParams.authentication.accessKey = program.accessKey;
+  }
+
+  if (program.keyId) {
+    additionalParams.authentication.keyId = program.keyId;
+  }
+
+  deploy(program.path, program.bucket, additionalParams).then((msg) => {
     console.log(chalk.greenBright(msg));
   }).catch((e) => {
     if (e.message) {

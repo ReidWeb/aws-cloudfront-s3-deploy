@@ -22,20 +22,46 @@ This module is not brilliant - I implemented it after incurring costs for invali
 You can use the module programmatically.
 
 ```javascript
-let deploy = require("aws-cloudfront-s3-deploy");
+let deploy = require('aws-cloudfront-s3-deploy');
 
-deploy("path-to-files", "mybucketname", "ABCDEFGHIJKLM", "dev").then(msg => {
-  console.log(msg);
-}).catch(e=>{
-  console.log(e);
+let additionalParams = {
+  cli: false,
+  verbose: false,
+  reuploadAll: false,
+  distribution: {
+    id: yourDistributionId
+  },
+  authentication: {
+    profile: yourProfileName,
+    keyId: yourKeyId,
+    accessKey: yourAccessKey
+  }
+};
+
+deploy('path-to-files', 'mybucketname', additionalParams).then(response => {
+  //Do more stuff here
+}).catch(e => {
+  //Do more stuff here
 })
 ```
 
 The method has params in sequence:
 * `path` - the path to the directory to upload, this will be excluded on s3 - i.e. if you upload `public`, then the contents of `public` will be uploaded to the root of your bucket.
 * `bucketName` - Amazon S3 bucket name to upload to
-* `distributionID` - ID of the CloudFront distribution to invalidate files in
-* `profile` - local AWS credentials profile ID
+* `additionalParams` - if passed as an option should be an object of type [additionalParams](#additionalparams-object).
+
+#### additionalParams object
+
+Keys as follows:
+* `cli` - boolean indicating whether the program is being run in CLI mode (default: `false`)
+* `verbose` - boolean indicating whether to run the program in verbose mode i.e. output a message for each upload (default: `false`)
+* `reuploadAll` - boolean indicating whether to reupload all files regardless of if they have changed (default: `false`)
+* `distribution` - object containing details of CloudFront distribution, absence will lead to no CloudFront distribution not being updated.
+    * `id` - ID of Amazon CloudFront distribution
+* `authentication` - object containing authentication options, absence will lead to using system defaults.
+    * `profile` - identifier of profile in local AWS credentials ini file. (cannot be used in conjunction with `accessKey` or `keyId`)
+    * `keyId` - AWS access key ID (cannot be used in conjunction with `profile`, must be used in conjunction with `accessKey`)
+    * `accessKey` - AWS access key (cannot be used in conjunction with `profile`, must be used in conjunction with `keyId`)
 
 ### CLI
 
@@ -45,8 +71,17 @@ The module can be used from the CLI as follows
 aws-cloudfront-deploy --path public --bucket mybucketname --distribution ABCDEFGHIJKLM --profile dev 
 ```
 
-## Note
+Options as follows
+```bash
+  -V, --version                 output the version number
+  -p, --path <required>         path
+  -b, --bucket <required>       bucket name
+  -d, --distribution [id]       cloudfront distribution id
+  -p, --profile [profile name]  profile to use
+  -i, --keyId [keyId]           AWS access key ID
+  -k, --accessKey [accessKey]   AWS access key
+  -r, --reupload                Re-upload all items
+  -v, --verbose                 run in verbose mode
+  -h, --help                    output usage information
+```
 
-This module is a heavy work in progress. The following features are still missing:
-* Specification of your own AWS keys as opposed to relying on profiles
-* Full test suite
