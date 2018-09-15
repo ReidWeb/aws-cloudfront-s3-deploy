@@ -37,6 +37,7 @@ function invalidateDistribution(distId, files) {
           const res = {
             message: `Invalidation with ID ${data.Invalidation.Id} has started for ${files.length} changed files!`,
             changedFiles: files,
+            invalidationId: data.Invalidation.Id,
           };
           resolve(res);
         }
