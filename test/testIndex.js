@@ -32,7 +32,7 @@ const should = chai.should();
 
 describe('index.js [Unit]', () => {
   describe('#validateParams()', () => {
-    const index = rewire('../dist/lib/index');
+    const index = rewire('../src/lib/index');
 
     const validateParams = index.__get__('validateParams');
 
@@ -109,7 +109,7 @@ describe('index.js [Unit]', () => {
   describe('#setAwsConfig()', () => {
     describe('when using access key auth', () => {
       it('should set accessKey correctly', async () => {
-        const index = rewire('../dist/lib/index');
+        const index = rewire('../src/lib/index');
         const setAwsConfig = index.__get__('setAwsConfig');
         const AWS = index.__get__('AWS');
         setAwsConfig({ authentication: { keyId: 'foo', accessKey: 'bar' } });
@@ -117,7 +117,7 @@ describe('index.js [Unit]', () => {
       });
 
       it('should set keyId correctly', async () => {
-        const index = rewire('../dist/lib/index');
+        const index = rewire('../src/lib/index');
         const setAwsConfig = index.__get__('setAwsConfig');
         const AWS = index.__get__('AWS');
         setAwsConfig({ authentication: { keyId: 'foo', accessKey: 'bar' } });
@@ -127,7 +127,7 @@ describe('index.js [Unit]', () => {
 
     describe('when using profile based auth', () => {
       it('should set credentials obj correctly', async () => {
-        const index = rewire('../dist/lib/index');
+        const index = rewire('../src/lib/index');
         const setAwsConfig = index.__get__('setAwsConfig');
         const AWS = index.__get__('AWS');
         setAwsConfig({ authentication: { profile: 'foo b' } });
@@ -137,7 +137,7 @@ describe('index.js [Unit]', () => {
 
     describe('when specifying region', () => {
       it('should resolve correctly', async () => {
-        const index = rewire('../dist/lib/index');
+        const index = rewire('../src/lib/index');
         const setAwsConfig = index.__get__('setAwsConfig');
         const AWS = index.__get__('AWS');
         setAwsConfig({ region: 'eu-central-1' });
@@ -149,7 +149,7 @@ describe('index.js [Unit]', () => {
   describe('#deploy()', () => {
     describe('when uploading the files to s3', () => {
       describe('and the upload is successful', () => {
-        const index = rewire('../dist/lib/index');
+        const index = rewire('../src/lib/index');
         const deploy = index.__get__('deploy');
 
         const setAwsConfigStub = sinon.stub();
@@ -221,7 +221,7 @@ describe('index.js [Unit]', () => {
       });
 
       describe('and the upload experiences an error', () => {
-        const index = rewire('../dist/lib/index');
+        const index = rewire('../src/lib/index');
         const deploy = index.__get__('deploy');
 
         const setAwsConfigStub = sinon.stub();
