@@ -5,13 +5,14 @@
   "engines": {
     "node": ">=8.0.0"
   },
-  "main": "src/index.js",
+  "main": "dist/lib/index.js",
   "bin": {
-    "aws-cloudfront-s3-deploy": "./bin/cli.js"
+    "aws-cloudfront-s3-deploy": "dist/bin/cli.js"
   },
   "scripts": {
+    "build": "babel src -d dist",
     "commit": "git-cz",
-    "test": "./node_modules/mocha/bin/mocha ./test/*",
+    "test": "mocha --require @babel/register ./test/*",
     "test-with-cov": "./node_modules/istanbul/lib/cli.js cover --include-all-sources --root ./src ./node_modules/mocha/bin/_mocha --report lcovonly -- -R spec",
     "lint": "./node_modules/eslint/bin/eslint.js src/*.js bin/*.js test/*.js || true",
     "preversion": "npm test",
@@ -42,6 +43,13 @@
   },
   "license": "MIT",
   "devDependencies": {
+    "@babel/cli": "^7.0.0",
+    "@babel/core": "^7.0.1",
+    "@babel/plugin-transform-runtime": "^7.0.0",
+    "@babel/preset-env": "^7.0.0",
+    "@babel/register": "^7.0.0",
+    "@babel/runtime": "^7.0.0",
+    "babel-plugin-rewire": "^1.2.0",
     "chai": "^4.1.2",
     "chai-as-promised": "^7.1.1",
     "commitizen": "^2.10.1",

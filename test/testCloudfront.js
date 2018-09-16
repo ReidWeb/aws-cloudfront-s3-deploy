@@ -33,7 +33,7 @@ const should = chai.should();
 describe('cloudfront.js [Unit]', () => {
   describe('#prefixPaths()', () => {
     it('should prefix a `/` onto the front of every item in the array', async () => {
-      const cloudfront = rewire('../src/cloudfront');
+      const cloudfront = rewire('../dist/lib/cloudfront');
 
       const prefixPaths = cloudfront.__get__('prefixPaths');
 
@@ -47,7 +47,7 @@ describe('cloudfront.js [Unit]', () => {
     describe('when successful', () => {
       describe('should resolve with an object', () => {
         it('with message containing detail on the invalidation', async () => {
-          const cloudfront = rewire('../src/cloudfront');
+          const cloudfront = rewire('../dist/lib/cloudfront');
 
           const invalidateDistribution = cloudfront.__get__('invalidateDistribution');
 
@@ -70,7 +70,7 @@ describe('cloudfront.js [Unit]', () => {
         });
 
         it('with key containing files invalidated in the invalidation', async () => {
-          const cloudfront = rewire('../src/cloudfront');
+          const cloudfront = rewire('../dist/lib/cloudfront');
 
           const invalidateDistribution = cloudfront.__get__('invalidateDistribution');
 
@@ -96,7 +96,7 @@ describe('cloudfront.js [Unit]', () => {
       describe('when a complete reupload is requested', () => {
         describe('should resolve with an object', () => {
           it('with message containing detail on the invalidation', async () => {
-            const cloudfront = rewire('../src/cloudfront');
+            const cloudfront = rewire('../dist/lib/cloudfront');
 
             const invalidateDistribution = cloudfront.__get__('invalidateDistribution');
 
@@ -120,7 +120,7 @@ describe('cloudfront.js [Unit]', () => {
           });
 
           it('with key containing the `*` path used in the invalidation', async () => {
-            const cloudfront = rewire('../src/cloudfront');
+            const cloudfront = rewire('../dist/lib/cloudfront');
 
             const invalidateDistribution = cloudfront.__get__('invalidateDistribution');
 
@@ -149,7 +149,7 @@ describe('cloudfront.js [Unit]', () => {
 
     describe('when an error is encountered', () => {
       it('should reject with an error', async () => {
-        const cloudfront = rewire('../src/cloudfront');
+        const cloudfront = rewire('../dist/lib/cloudfront');
 
         const invalidateDistribution = cloudfront.__get__('invalidateDistribution');
 

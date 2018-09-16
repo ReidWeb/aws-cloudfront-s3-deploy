@@ -2,6 +2,7 @@
 *.tgz
 
 tmp
+src
 test
 itest
 tasks

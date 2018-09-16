@@ -34,7 +34,7 @@ chai.use(require('chai-as-promised'));
 describe('s3.js [Unit]', () => {
   describe('#getFileLastModifiedDate()', () => {
     it('should resolve the last modified date when the meta-data is available', async () => {
-      const s3 = rewire('../src/s3');
+      const s3 = rewire('../dist/lib/s3');
       const getFileLastModifiedDate = s3.__get__('getFileLastModifiedDate');
       const time = '2014-09-12T15:48:06.228Z';
       const fsMock = {
@@ -50,7 +50,7 @@ describe('s3.js [Unit]', () => {
     });
 
     it('should resolve to `false` when the meta-data is non existant', async () => {
-      const s3 = rewire('../src/s3');
+      const s3 = rewire('../dist/lib/s3');
       const getFileLastModifiedDate = s3.__get__('getFileLastModifiedDate');
       const fsMock = {
         stat(path, cb) {
@@ -65,7 +65,7 @@ describe('s3.js [Unit]', () => {
     });
 
     it('should resolve to `false` when the meta-data is an empty string', async () => {
-      const s3 = rewire('../src/s3');
+      const s3 = rewire('../dist/lib/s3');
       const getFileLastModifiedDate = s3.__get__('getFileLastModifiedDate');
       const fsMock = {
         stat(path, cb) {
@@ -82,7 +82,7 @@ describe('s3.js [Unit]', () => {
 
   describe('#uploadObj()', () => {
     it('should resolve the object key upon a successful upload', async () => {
-      const s3 = rewire('../src/s3');
+      const s3 = rewire('../dist/lib/s3');
       const uploadObj = s3.__get__('uploadObj');
 
       const s3ClientMock = {
@@ -97,7 +97,7 @@ describe('s3.js [Unit]', () => {
     });
 
     it('should reject with an error after multiple failed uploads', async () => {
-      const s3 = rewire('../src/s3');
+      const s3 = rewire('../dist/lib/s3');
       const uploadObj = s3.__get__('uploadObj');
 
       const s3ClientMock = {
@@ -115,7 +115,7 @@ describe('s3.js [Unit]', () => {
     });
 
     it('should reject immediately with an error if a fatal error occurs', async () => {
-      const s3 = rewire('../src/s3');
+      const s3 = rewire('../dist/lib/s3');
       const uploadObj = s3.__get__('uploadObj');
 
       const s3ClientMock = {
@@ -144,7 +144,7 @@ describe('s3.js [Unit]', () => {
     describe('when file already exists in S3', () => {
       describe('and last modified dates do not match', () => {
         it('should resolve to false', async () => {
-          const s3 = rewire('../src/s3');
+          const s3 = rewire('../dist/lib/s3');
           const hasFileChanged = s3.__get__('hasFileChanged');
           const res = {
             Metadata: {
@@ -171,7 +171,7 @@ describe('s3.js [Unit]', () => {
       });
 
       describe('and last modified dates match', () => {
-        const s3 = rewire('../src/s3');
+        const s3 = rewire('../dist/lib/s3');
         const hasFileChanged = s3.__get__('hasFileChanged');
         const res = {
           Metadata: {
@@ -207,7 +207,7 @@ describe('s3.js [Unit]', () => {
 
       describe('and last modified date is not available for remote file', () => {
         it('should resolve to true (in order to instigate an upload)', async () => {
-          const s3 = rewire('../src/s3');
+          const s3 = rewire('../dist/lib/s3');
           const hasFileChanged = s3.__get__('hasFileChanged');
           const res = {
             Metadata: {},
@@ -234,7 +234,7 @@ describe('s3.js [Unit]', () => {
 
     describe('when file does not already exist in S3', () => {
       it('should resolve to true (in order to instigate an upload)', async () => {
-        const s3 = rewire('../src/s3');
+        const s3 = rewire('../dist/lib/s3');
         const hasFileChanged = s3.__get__('hasFileChanged');
         const errorRes = {
           code: 'NotFound',
@@ -259,7 +259,7 @@ describe('s3.js [Unit]', () => {
 
     describe('when a error is encountered getting the object from S3', () => {
       it('should reject with the error', async () => {
-        const s3 = rewire('../src/s3');
+        const s3 = rewire('../dist/lib/s3');
         const hasFileChanged = s3.__get__('hasFileChanged');
         const errorRes = {
           code: 'AnyErrorButNotFound',
@@ -296,7 +296,7 @@ describe('s3.js [Unit]', () => {
 
   describe('#lookupFileType()', () => {
     it('should resolve the file type when the filetype as an associated mime type', async () => {
-      const s3 = rewire('../src/s3');
+      const s3 = rewire('../dist/lib/s3');
       const lookupFileType = s3.__get__('lookupFileType');
 
       const mimeMock = {
@@ -312,7 +312,7 @@ describe('s3.js [Unit]', () => {
     });
 
     it('should resolve to `application/octet-stream` when the filetype has no associated mime type', async () => {
-      const s3 = rewire('../src/s3');
+      const s3 = rewire('../dist/lib/s3');
       const lookupFileType = s3.__get__('lookupFileType');
 
       const mimeMock = {
@@ -329,7 +329,7 @@ describe('s3.js [Unit]', () => {
 
     describe('when an error is encountered looking up the mime type', () => {
       it('should reject with error', async () => {
-        const s3 = rewire('../src/s3');
+        const s3 = rewire('../dist/lib/s3');
         const lookupFileType = s3.__get__('lookupFileType');
 
         const mimeMock = {
@@ -353,7 +353,7 @@ describe('s3.js [Unit]', () => {
   describe('#uploadFiles()', () => {
     describe('when program is being run from CLI', async () => {
       it('then the progress bar should be created', async () => {
-        const s3 = rewire('../src/s3');
+        const s3 = rewire('../dist/lib/s3');
         const uploadFiles = s3.__get__('uploadFiles');
 
         let constructorCallCount = 0;
@@ -406,7 +406,7 @@ describe('s3.js [Unit]', () => {
 
     describe('when verbose mode is turned on', () => {
       it('then log statements should be output with progress', async () => {
-        const s3 = rewire('../src/s3');
+        const s3 = rewire('../dist/lib/s3');
         const uploadFiles = s3.__get__('uploadFiles');
 
 
@@ -464,7 +464,7 @@ describe('s3.js [Unit]', () => {
     describe('when parameters are supplied to `uploadObj` function', () => {
       let interceptedArgs;
       before(async () => {
-        const s3 = rewire('../src/s3');
+        const s3 = rewire('../dist/lib/s3');
         const uploadFiles = s3.__get__('uploadFiles');
 
 
@@ -533,7 +533,7 @@ describe('s3.js [Unit]', () => {
 
     describe('when the file type of the file is looked up', () => {
       it('it should be the local file path that is used, not the remote file path', async () => {
-        const s3 = rewire('../src/s3');
+        const s3 = rewire('../dist/lib/s3');
         const uploadFiles = s3.__get__('uploadFiles');
 
 
@@ -582,7 +582,7 @@ describe('s3.js [Unit]', () => {
       });
 
       it('it should reject with an error when an error is encountered', async () => {
-        const s3 = rewire('../src/s3');
+        const s3 = rewire('../dist/lib/s3');
         const uploadFiles = s3.__get__('uploadFiles');
 
 
@@ -637,7 +637,7 @@ describe('s3.js [Unit]', () => {
 
     describe('when an error is encountered uploading the file', () => {
       it('should reject with error', async () => {
-        const s3 = rewire('../src/s3');
+        const s3 = rewire('../dist/lib/s3');
         const uploadFiles = s3.__get__('uploadFiles');
 
 
@@ -693,7 +693,7 @@ describe('s3.js [Unit]', () => {
     describe('when all files have been successfully uploaded', () => {
       describe('and program is not being run from CLI', () => {
         it('then the progress bar should never have been incremented', async () => {
-          const s3 = rewire('../src/s3');
+          const s3 = rewire('../dist/lib/s3');
           const uploadFiles = s3.__get__('uploadFiles');
 
           let tickCallCount = 0;
@@ -748,7 +748,7 @@ describe('s3.js [Unit]', () => {
         });
 
         it('should resolve with `Upload complete!`', async () => {
-          const s3 = rewire('../src/s3');
+          const s3 = rewire('../dist/lib/s3');
           const uploadFiles = s3.__get__('uploadFiles');
 
           class ProgressBarMock {
@@ -803,7 +803,7 @@ describe('s3.js [Unit]', () => {
 
       describe('and program is being run from CLI', () => {
         it('then the progress bar should have been incremented successfully', async () => {
-          const s3 = rewire('../src/s3');
+          const s3 = rewire('../dist/lib/s3');
           const uploadFiles = s3.__get__('uploadFiles');
 
           let tickCallCount = 0;
@@ -858,7 +858,7 @@ describe('s3.js [Unit]', () => {
         });
 
         it('should resolve with `Upload complete!`', async () => {
-          const s3 = rewire('../src/s3');
+          const s3 = rewire('../dist/lib/s3');
           const uploadFiles = s3.__get__('uploadFiles');
 
           class ProgressBarMock {
@@ -917,7 +917,7 @@ describe('s3.js [Unit]', () => {
     describe('when there are files at the specified path', () => {
       describe('when no files have changed', () => {
         it('should resolve to object with property message indicating no file updates were required', async () => {
-          const s3 = rewire('../src/s3');
+          const s3 = rewire('../dist/lib/s3');
           const uploadFilesInDir = s3.__get__('uploadFilesInDir');
 
           const recursiveStub = sinon.stub();
@@ -944,7 +944,7 @@ describe('s3.js [Unit]', () => {
         });
 
         it('should resolve to object property `changedFiles` that should be an empty array', async () => {
-          const s3 = rewire('../src/s3');
+          const s3 = rewire('../dist/lib/s3');
           const uploadFilesInDir = s3.__get__('uploadFilesInDir');
 
           const recursiveStub = sinon.stub();
@@ -974,7 +974,7 @@ describe('s3.js [Unit]', () => {
       describe('when files have changed', () => {
         describe('should instigate the upload of the changed files and should resolve an object where', () => {
           it('the files changed are stored to property `changedFiles`', async () => {
-            const s3 = rewire('../src/s3');
+            const s3 = rewire('../dist/lib/s3');
             const uploadFilesInDir = s3.__get__('uploadFilesInDir');
 
             const recursiveStub = sinon.stub();
@@ -1007,7 +1007,7 @@ describe('s3.js [Unit]', () => {
           });
 
           it('the success message from `uploadFiles` is stored to property `message`', async () => {
-            const s3 = rewire('../src/s3');
+            const s3 = rewire('../dist/lib/s3');
             const uploadFilesInDir = s3.__get__('uploadFilesInDir');
 
             const recursiveStub = sinon.stub();
@@ -1042,7 +1042,7 @@ describe('s3.js [Unit]', () => {
       describe('when a complete re-upload is requested', () => {
         describe('should instigate the upload of all files and should resolve an object where', () => {
           it('the files updated are stored to property `changedFiles`', async () => {
-            const s3 = rewire('../src/s3');
+            const s3 = rewire('../dist/lib/s3');
             const uploadFilesInDir = s3.__get__('uploadFilesInDir');
 
             const recursiveStub = sinon.stub();
@@ -1073,7 +1073,7 @@ describe('s3.js [Unit]', () => {
           });
 
           it('the success message from `uploadFiles` is stored to property `message`', async () => {
-            const s3 = rewire('../src/s3');
+            const s3 = rewire('../dist/lib/s3');
             const uploadFilesInDir = s3.__get__('uploadFilesInDir');
 
             const recursiveStub = sinon.stub();
@@ -1104,7 +1104,7 @@ describe('s3.js [Unit]', () => {
 
       describe('when an error occurs checking if a file has changed', () => {
         it('should reject with an error', async () => {
-          const s3 = rewire('../src/s3');
+          const s3 = rewire('../dist/lib/s3');
           const uploadFilesInDir = s3.__get__('uploadFilesInDir');
 
           const recursiveStub = sinon.stub();
@@ -1134,7 +1134,7 @@ describe('s3.js [Unit]', () => {
 
       describe('when an error occurs uploading the files', () => {
         it('should reject with an error when uploading changed files', async () => {
-          const s3 = rewire('../src/s3');
+          const s3 = rewire('../dist/lib/s3');
           const uploadFilesInDir = s3.__get__('uploadFilesInDir');
 
           const recursiveStub = sinon.stub();
@@ -1170,7 +1170,7 @@ describe('s3.js [Unit]', () => {
         });
 
         it('should reject with an error when uploading all files', async () => {
-          const s3 = rewire('../src/s3');
+          const s3 = rewire('../dist/lib/s3');
           const uploadFilesInDir = s3.__get__('uploadFilesInDir');
 
           const recursiveStub = sinon.stub();
@@ -1206,7 +1206,7 @@ describe('s3.js [Unit]', () => {
 
     describe('when there are no files at the specified path', () => {
       it('should resolve with a message stating that it could not find any files', async () => {
-        const s3 = rewire('../src/s3');
+        const s3 = rewire('../dist/lib/s3');
         const uploadFilesInDir = s3.__get__('uploadFilesInDir');
 
         const recursiveStub = sinon.stub();
@@ -1220,7 +1220,7 @@ describe('s3.js [Unit]', () => {
 
     describe('when there is an un-handled error recursively processing the specified path', () => {
       it('should reject with error', async () => {
-        const s3 = rewire('../src/s3');
+        const s3 = rewire('../dist/lib/s3');
         const uploadFilesInDir = s3.__get__('uploadFilesInDir');
 
         const recursiveStub = sinon.stub();
@@ -1238,7 +1238,7 @@ describe('s3.js [Unit]', () => {
 
     describe('when the directory specified does not exist', () => {
       it('should reject with a descript error', async () => {
-        const s3 = rewire('../src/s3');
+        const s3 = rewire('../dist/lib/s3');
         const uploadFilesInDir = s3.__get__('uploadFilesInDir');
 
         const recursiveStub = sinon.stub();
@@ -1256,7 +1256,7 @@ describe('s3.js [Unit]', () => {
 
     describe('when the directory specified is not a directory', () => {
       it('should reject with a descript error', async () => {
-        const s3 = rewire('../src/s3');
+        const s3 = rewire('../dist/lib/s3');
         const uploadFilesInDir = s3.__get__('uploadFilesInDir');
 
         const recursiveStub = sinon.stub();

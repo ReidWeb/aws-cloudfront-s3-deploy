@@ -25,7 +25,7 @@
 /* eslint-env mocha */
 
 const chai = require('chai');
-const common = require('../src/common');
+const common = require('../dist/lib/common');
 
 const should = chai.should();
 
