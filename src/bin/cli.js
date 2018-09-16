@@ -24,7 +24,7 @@
 /* eslint-disable max-len,no-console */
 const program = require('commander');
 const chalk = require('chalk');
-const deploy = require('../src/index');
+const deploy = require('../lib/index');
 
 program
   .version('1.0.0')
