@@ -6,9 +6,11 @@ node_js:
 - "9"
 - "10"
 sudo: false
-#
-#script:
+
+script:
 #- npm run test-with-cov
+- npm run build
+- npm run test
 
 before_deploy:
 - git remote set-url origin https://${GH_TOKEN}@github.com/ReidWeb/aws-cloudfront-s3-deploy/
