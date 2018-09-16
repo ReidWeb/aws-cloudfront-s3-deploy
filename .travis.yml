@@ -1,5 +1,7 @@
 language: node_js
 node_js:
+- "4"
+- "6"
 - "8"
 - "9"
 - "10"
@@ -25,7 +27,7 @@ deploy:
   on:
     tags: false
     condition: '$TRAVIS_COMMIT_MESSAGE != *"chore(release)"*'
-    node: 8
+    node: 10
     repo: ReidWeb/aws-cloudfront-s3-deploy
     branch: master
 
