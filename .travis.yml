@@ -27,7 +27,7 @@ deploy:
   on:
     tags: false
     condition: '$TRAVIS_COMMIT_MESSAGE != *"chore(release)"*'
-    node: 10
+    node: 8
     repo: ReidWeb/aws-cloudfront-s3-deploy
     branch: master
 
