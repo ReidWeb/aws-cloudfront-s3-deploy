@@ -14,7 +14,7 @@
     "commit": "git-cz",
     "test": "mocha --require @babel/register ./test/*",
     "test-with-cov": "./node_modules/istanbul/lib/cli.js cover --include-all-sources --root ./src ./node_modules/mocha/bin/_mocha --report lcovonly -- -R spec",
-    "lint": "./node_modules/eslint/bin/eslint.js src/*.js bin/*.js test/*.js || true",
+    "lint": "./node_modules/eslint/bin/eslint.js src/**/*.js  test/*.js || true",
     "preversion": "npm test",
     "release": "standard-version"
   },

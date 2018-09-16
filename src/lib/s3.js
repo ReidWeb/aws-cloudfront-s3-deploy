@@ -209,6 +209,7 @@ function uploadFilesInDir(pathToUpload, bucketName, additionalParams) {
           });
         } else {
           if (!additionalParams || !additionalParams.reuploadAll) {
+            // eslint-disable-next-line no-console
             console.log(chalk.blue('Determining objects files...'));
           }
           fileList.forEach((fileName) => {
