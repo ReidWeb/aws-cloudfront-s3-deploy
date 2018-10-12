@@ -72,14 +72,14 @@ function uploadObj(params, s3, reAttemptCount) {
   });
 }
 
-function hasFileChanged(pathToFile, fileName, bucketName, s3, localFileModifiedCheckFn) {
+function getObjectDiff(pathToFile, fileName, bucketName, s3, localFileModifiedCheckFn) {
   return new Promise((resolve, reject) => {
     const params = { Bucket: bucketName, Key: fileName };
 
     s3.headObject(params, (err, remoteData) => {
       if (err) {
         if (err.code === 'NotFound') {
-          resolve(true);
+          resolve(false);
         } else {
           reject(common.handleAwsError(err));
         }
@@ -229,7 +229,7 @@ function uploadFilesInDir(pathToUpload, bucketName, additionalParams) {
                 })
                 .catch(e => reject(e));
             } else {
-              hasFileChanged(pathToUpload, bucketPath, bucketName, s3, getFileLastModifiedDate)
+              getObjectDiff(pathToUpload, bucketPath, bucketName, s3, getFileLastModifiedDate)
                 .then((hasChanged) => {
                   if (hasChanged) {
                     changedFiles.push(bucketPath);
