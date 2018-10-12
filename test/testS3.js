@@ -199,14 +199,14 @@ describe('s3.js [Unit]', () => {
           fileModifiedCheckFnSpy.calledWith('path/to/foo.txt').should.be.ok;
         });
 
-        it('should resolve to true', async () => {
+        it('should resolve "update"', async () => {
           const actual = await getObjectDiff('path/to', 'foo.txt', 'myBucket', s3ClientMock, fileModifiedCheckFnSpy);
-          actual.should.equal(true);
+          actual.should.equal('update');
         });
       });
 
       describe('and last modified date is not available for remote file', () => {
-        it('should resolve to true (in order to instigate an upload)', async () => {
+        it('should resolve to "update" (in order to instigate an upload)', async () => {
           const s3 = rewire('../src/lib/s3');
           const getObjectDiff = s3.__get__('getObjectDiff');
           const res = {
@@ -227,13 +227,13 @@ describe('s3.js [Unit]', () => {
 
           const actual = await getObjectDiff('path/to', 'foo.txt', 'myBucket', s3ClientMock, fileModifiedCheckFn);
 
-          actual.should.equal(true);
+          actual.should.equal('update');
         });
       });
     });
 
     describe('when file does not already exist in S3', () => {
-      it('should resolve to true (in order to instigate an upload)', async () => {
+      it('should resolve to "create" (in order to instigate an upload)', async () => {
         const s3 = rewire('../src/lib/s3');
         const getObjectDiff = s3.__get__('getObjectDiff');
         const errorRes = {
@@ -253,7 +253,7 @@ describe('s3.js [Unit]', () => {
         }
 
         const actual = await getObjectDiff('path/to', 'foo.txt', 'myBucket', s3ClientMock, fileModifiedCheckFn);
-        actual.should.equal(false);
+        actual.should.equal('create');
       });
     });
 
@@ -989,9 +989,9 @@ describe('s3.js [Unit]', () => {
             s3.__set__({ console: consoleMock });
 
             const getObjectDiffStub = sinon.stub();
-            getObjectDiffStub.withArgs('base', 'foo.txt', bucketName, sinon.match.any, sinon.match.any).resolves(true);
+            getObjectDiffStub.withArgs('base', 'foo.txt', bucketName, sinon.match.any, sinon.match.any).resolves('update');
             getObjectDiffStub.withArgs('base', 'bar.yml', bucketName, sinon.match.any, sinon.match.any).resolves(false);
-            getObjectDiffStub.withArgs('base', 'path/to/hello.json', bucketName, sinon.match.any, sinon.match.any).resolves(true);
+            getObjectDiffStub.withArgs('base', 'path/to/hello.json', bucketName, sinon.match.any, sinon.match.any).resolves('create');
 
             s3.__set__('getObjectDiff', getObjectDiffStub);
 
@@ -1001,9 +1001,13 @@ describe('s3.js [Unit]', () => {
             s3.__set__('uploadFiles', uploadFilesStub);
 
             const actual = await uploadFilesInDir('base', bucketName);
-            actual.changedFiles.should.contain('path/to/hello.json');
+            actual.uploadedFiles.should.contain('path/to/hello.json');
+            actual.uploadedFiles.should.contain('foo.txt');
+            actual.uploadedFiles.should.not.contain('bar.yml');
+
+            actual.changedFiles.should.not.contain('path/to/hello.json');
             actual.changedFiles.should.contain('foo.txt');
-            actual.changedFiles.should.not.contain('bar.yml');
+            actual.uploadedFiles.should.not.contain('bar.yml');
           });
 
           it('the success message from `uploadFiles` is stored to property `message`', async () => {
@@ -1022,9 +1026,9 @@ describe('s3.js [Unit]', () => {
             s3.__set__({ console: consoleMock });
 
             const getObjectDiffStub = sinon.stub();
-            getObjectDiffStub.withArgs('base', 'foo.txt', bucketName, sinon.match.any, sinon.match.any).resolves(true);
+            getObjectDiffStub.withArgs('base', 'foo.txt', bucketName, sinon.match.any, sinon.match.any).resolves('update');
             getObjectDiffStub.withArgs('base', 'bar.yml', bucketName, sinon.match.any, sinon.match.any).resolves(false);
-            getObjectDiffStub.withArgs('base', 'path/to/hello.json', bucketName, sinon.match.any, sinon.match.any).resolves(true);
+            getObjectDiffStub.withArgs('base', 'path/to/hello.json', bucketName, sinon.match.any, sinon.match.any).resolves('create');
 
             s3.__set__('getObjectDiff', getObjectDiffStub);
 
@@ -1150,9 +1154,9 @@ describe('s3.js [Unit]', () => {
           s3.__set__({ console: consoleMock });
 
           const getObjectDiffStub = sinon.stub();
-          getObjectDiffStub.withArgs('base', 'foo.txt', bucketName, sinon.match.any, sinon.match.any).resolves(true);
+          getObjectDiffStub.withArgs('base', 'foo.txt', bucketName, sinon.match.any, sinon.match.any).resolves('update');
           getObjectDiffStub.withArgs('base', 'bar.yml', bucketName, sinon.match.any, sinon.match.any).resolves(false);
-          getObjectDiffStub.withArgs('base', 'path/to/hello.json', bucketName, sinon.match.any, sinon.match.any).resolves(true);
+          getObjectDiffStub.withArgs('base', 'path/to/hello.json', bucketName, sinon.match.any, sinon.match.any).resolves('create');
 
           s3.__set__('getObjectDiff', getObjectDiffStub);
 

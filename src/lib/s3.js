@@ -79,7 +79,7 @@ function getObjectDiff(pathToFile, fileName, bucketName, s3, localFileModifiedCh
     s3.headObject(params, (err, remoteData) => {
       if (err) {
         if (err.code === 'NotFound') {
-          resolve(false);
+          resolve('create');
         } else {
           reject(common.handleAwsError(err));
         }
@@ -88,9 +88,9 @@ function getObjectDiff(pathToFile, fileName, bucketName, s3, localFileModifiedCh
         localFileModifiedCheckFn(filePath).then((localFileLastModifiedDate) => {
           const remoteFileLastModifiedDate = remoteData.Metadata['last-modified'];
           if (!remoteFileLastModifiedDate) { // If last modified date could not be retrieved
-            resolve(true);
+            resolve('update');
           } else if (remoteFileLastModifiedDate !== localFileLastModifiedDate.toISOString()) {
-            resolve(true);
+            resolve('update');
           } else {
             resolve(false);
           }
@@ -186,7 +186,8 @@ function uploadFiles(pathToUpload, fileList, bucketName, additionalParams) {
 
 function uploadFilesInDir(pathToUpload, bucketName, additionalParams) {
   return new Promise((resolve, reject) => {
-    const changedFiles = [];
+    const filesToUpload = [];
+    const updatedFiles = [];
     recursive(pathToUpload, (err, fileList) => {
       if (err) {
         if (err.code === 'ENOTDIR') {
@@ -230,20 +231,24 @@ function uploadFilesInDir(pathToUpload, bucketName, additionalParams) {
                 .catch(e => reject(e));
             } else {
               getObjectDiff(pathToUpload, bucketPath, bucketName, s3, getFileLastModifiedDate)
-                .then((hasChanged) => {
-                  if (hasChanged) {
-                    changedFiles.push(bucketPath);
+                .then((diff) => {
+                  if (diff === 'update' || diff === 'create') {
+                    filesToUpload.push(bucketPath);
+                  }
+                  if (diff === 'update') {
+                    updatedFiles.push(bucketPath);
                   }
                   testedFiles++;
 
                   if (testedFiles === fileListLength) {
-                    if (changedFiles.length > 0) {
+                    if (filesToUpload.length > 0) {
                       // eslint-disable-next-line no-console
-                      console.log(chalk.yellow(`${fileListLength} objects found, uploading ${changedFiles.length} objects that require updates to S3 Bucket: ${bucketName}...`));
-                      uploadFiles(pathToUpload, changedFiles, bucketName, additionalParams)
+                      console.log(chalk.yellow(`${fileListLength} objects found, uploading ${filesToUpload.length} objects that require updates to S3 Bucket: ${bucketName}...`));
+                      uploadFiles(pathToUpload, filesToUpload, bucketName, additionalParams)
                         .then((msg) => {
                           resolve({
-                            changedFiles,
+                            uploadedFiles: filesToUpload,
+                            changedFiles: updatedFiles,
                             message: msg,
                           });
                         })

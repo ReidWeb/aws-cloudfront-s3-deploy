@@ -86,7 +86,7 @@ function deploy(userPath, bucketName, additionalParams) {
         resolve(uploadResult);
       } else if (additionalParams && additionalParams.distribution.id) {
         console.log(chalk.green(uploadResult.message));
-        console.log(chalk.yellow(`Commencing invalidation operation for distribution ${additionalParams.distribution.id}...`));
+        console.log(chalk.yellow(`Commencing invalidation operation for distribution ${additionalParams.distribution.id} of ${uploadResult.changedFiles.length}...`));
         // eslint-disable-next-line max-len
         resolve(await cloudFront.invalidateDistribution(additionalParams.distribution.id, uploadResult.changedFiles, additionalParams));
       }
