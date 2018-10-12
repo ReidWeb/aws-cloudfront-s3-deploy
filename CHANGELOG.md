@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="1.2.7"></a>
+## [1.2.7](https://github.com/ReidWeb/aws-cloudfront-s3-deploy/compare/v1.2.6...v1.2.7) (2018-10-12)
+
+
+
 <a name="1.2.6"></a>
 ## [1.2.6](https://github.com/ReidWeb/aws-cloudfront-s3-deploy/compare/v1.2.5...v1.2.6) (2018-10-12)
 
