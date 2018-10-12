@@ -176,7 +176,7 @@ describe('index.js [Unit]', () => {
         index.__set__({ console: consoleMock });
 
         const uploadFilesInDirStub = sinon.stub();
-        uploadFilesInDirStub.resolves({ changedFiles: ['myFile.txt', 'yourFile.json'], message: 'a message' });
+        uploadFilesInDirStub.resolves({ changedFiles: ['myFile.txt', 'yourFile.json'], uploadedFiles: ['myFile.txt', 'yourFile.json', 'foo.yaml'], message: 'a message' });
 
         const s3Stub = {
           uploadFilesInDir: uploadFilesInDirStub,
