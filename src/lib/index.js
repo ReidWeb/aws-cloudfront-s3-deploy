@@ -82,7 +82,7 @@ function deploy(userPath, bucketName, additionalParams) {
       const uploadResult = await s3.uploadFilesInDir(uploadPath, bucketName, additionalParams);
 
       // eslint-disable-next-line max-len
-      if (!additionalParams || !additionalParams.distribution || !additionalParams.distribution.id || uploadResult.changedFiles.length === 0) { // If no invalidation required
+      if (!additionalParams || !additionalParams.distribution || !additionalParams.distribution.id || uploadResult.uploadedFiles.length === 0) { // If no invalidation required
         resolve(uploadResult);
       } else if (additionalParams && additionalParams.distribution.id) {
         console.log(chalk.green(uploadResult.message));

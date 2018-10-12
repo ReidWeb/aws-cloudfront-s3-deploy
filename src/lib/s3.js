@@ -217,7 +217,7 @@ function uploadFilesInDir(pathToUpload, bucketName, additionalParams) {
             const bucketPath = path.relative(pathToUpload, fileName);
             if (additionalParams && additionalParams.reuploadAll) {
               // eslint-disable-next-line no-console
-              console.log(chalk.yellow(`${fileListLength} objects found, re-uploading all to S3 Bucket: ${bucketName}`));
+              console.log(chalk.yellow(`${fileListLength} objects found, uploading all to S3 Bucket: ${bucketName}`));
               // eslint-disable-next-line max-len
               const fileListWithNoBase = fileList.map(currentFilePath => path.relative(pathToUpload, currentFilePath));
 
