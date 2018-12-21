@@ -1,5 +1,7 @@
 # aws-cloudfront-s3-deploy
 
+**DEPRECATED: I would instead recommend using AWS' official CLI toolchain for such use cases - [Amplify CLI](https://github.com/aws-amplify/amplify-cli)**. No updates will be made to this repository
+
 [![npm version](https://img.shields.io/npm/v/aws-cloudfront-s3-deploy.svg)](https://www.npmjs.com/package/gitinspector-csv)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/ReidWeb/GitInspector-CSV/master/LICENSE)
 [![npm downloads](https://img.shields.io/npm/dm/aws-cloudfront-s3-deploy.svg)](https://www.npmjs.com/package/gitinspector-csv)
