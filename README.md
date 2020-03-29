@@ -10,7 +10,7 @@
 
 [![Build Status](https://travis-ci.com/ReidWeb/aws-cloudfront-s3-deploy.svg?branch=master)](https://travis-ci.com/ReidWeb/aws-cloudfront-s3-deploy)
 [![devDependencies Status](https://david-dm.org/reidweb/aws-cloudfront-s3-deploy/dev-status.svg)](https://david-dm.org/reidweb/GitInspector-CSV?type=dev)
-[![Greenkeeper badge](https://badges.greenkeeper.io/ReidWeb/aws-cloudfront-s3-deploy.svg)](https://greenkeeper.io/)
+
 
 Node.js module that:
 1. Uploads files at a specified path to a specified Amazon S3 bucket that require updates
