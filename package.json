@@ -40,7 +40,7 @@
     "commander": "^2.18.0",
     "cz-conventional-changelog": "^2.1.0",
     "mime-types": "^2.1.20",
-    "progress": "^2.0.0",
+    "progress": "^2.0.3",
     "recursive-readdir": "^2.2.2"
   },
   "license": "MIT",
